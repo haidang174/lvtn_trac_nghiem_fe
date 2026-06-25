@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
+import GuestRoute from './GuestRoute';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -10,11 +11,18 @@ import HomePage from '@/pages/HomePage';
 import { ForbiddenPage, NotFoundPage } from '@/pages/ErrorPages';
 
 export const router = createBrowserRouter([
-  // Route công khai (chưa cần đăng nhập)
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
+  // Route công khai — chỉ dành cho khách (đã đăng nhập sẽ bị đẩy về '/')
+  {
+    element: <GuestRoute />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+    ],
+  },
+
+  // Callback Google: không bọc GuestRoute vì cần xử lý token rồi mới chuyển hướng
   { path: '/auth/google/callback', element: <GoogleCallbackPage /> },
 
   // Route yêu cầu đăng nhập

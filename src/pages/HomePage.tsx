@@ -23,11 +23,13 @@ export default function HomePage() {
         </dl>
 
         <div className="mt-6 flex gap-3">
-          <Link to="/change-password">
-            <Button variant="outline" type="button">
-              Đổi mật khẩu
-            </Button>
-          </Link>
+          {user?.coMatKhau && (
+            <Link to="/change-password">
+              <Button variant="outline" type="button">
+                Đổi mật khẩu
+              </Button>
+            </Link>
+          )}
           <Button variant="secondary" type="button" onClick={logout}>
             Đăng xuất
           </Button>
