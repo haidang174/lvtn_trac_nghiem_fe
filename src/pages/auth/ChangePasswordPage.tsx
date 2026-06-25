@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -7,10 +7,17 @@ import { authApi } from '@/api/auth.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useAppDispatch } from '@/store/hooks';
 import { themToast } from '@/store/slices/ui.slice';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ChangePasswordPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Tài khoản đăng nhập bằng Google chưa đặt mật khẩu LOCAL -> không cho đổi mật khẩu.
+  if (user && !user.coMatKhau) {
+    return <Navigate to="/" replace />;
+  }
 
   const [matKhauHienTai, setMatKhauHienTai] = useState('');
   const [matKhauMoi, setMatKhauMoi] = useState('');
