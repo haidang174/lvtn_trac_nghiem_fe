@@ -120,6 +120,14 @@ export function chuanHoaLoi(error: unknown): ApiError {
       errors: data?.errors,
     };
   }
+  if (error && typeof error === 'object' && 'message' in error) {
+    const e = error as Partial<ApiError>;
+    return {
+      status: e.status ?? 0,
+      message: e.message ?? 'Có lỗi xảy ra',
+      errors: e.errors,
+    };
+  }
   return { status: 0, message: 'Có lỗi xảy ra' };
 }
 
