@@ -13,6 +13,8 @@ import ExamDetailPage from '@/pages/exams/ExamDetailPage';
 import ExamRoomListPage from '@/pages/exam-rooms/ExamRoomListPage';
 import ExamRoomFormPage from '@/pages/exam-rooms/ExamRoomFormPage';
 import ExamRoomDetailPage from '@/pages/exam-rooms/ExamRoomDetailPage';
+import JoinRoomPage from '@/pages/exam-sessions/JoinRoomPage';
+import ExamTakingPage from '@/pages/exam-sessions/ExamTakingPage';
 
 // Vai trò Giáo viên + Admin (quản lý nội dung): dùng lại cho nhiều module.
 const GV_ADMIN = [VaiTro.GIAO_VIEN, VaiTro.QUAN_TRI_VIEN];
@@ -74,5 +76,14 @@ export const moduleRoutes: RouteObject[] = [
   {
     element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.GIAO_VIEN]} />,
     children: [{ path: '/exam-rooms/new', element: <ExamRoomFormPage /> }],
+  },
+
+  // ----- Module Làm bài thi (chỉ HS) -----
+  {
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.HOC_SINH]} />,
+    children: [
+      { path: '/join', element: <JoinRoomPage /> },
+      { path: '/exam/:id', element: <ExamTakingPage /> },
+    ],
   },
 ];
