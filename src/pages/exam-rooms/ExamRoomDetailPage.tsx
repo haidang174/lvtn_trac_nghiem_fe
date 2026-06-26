@@ -1,0 +1,212 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import PageHeader from '@/components/common/PageHeader';
+import Table, { type ColumnDef } from '@/components/common/Table';
+import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
+import Button from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
+import { examRoomsApi } from '@/api/examRooms.api';
+import { chuanHoaLoi } from '@/api/axiosClient';
+import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/hooks/useAuth';
+import { VaiTro } from '@/enums/vaiTro';
+import { formatDateTime } from '@/utils/formatDate';
+import { NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
+import { TrangThaiPhongThi, NHAN_TRANG_THAI_PHONG_THI } from '@/enums/trangThaiPhongThi';
+import { TrangThaiThanhVien, NHAN_TRANG_THAI_THANH_VIEN } from '@/enums/trangThaiThanhVien';
+import { mauTrangThaiPhong } from './ExamRoomListPage';
+import type { PhongThi, ThanhVienPhong } from '@/types/phong-thi.type';
+
+// Các bước chuyển trạng thái hợp lệ (khớp service Backend).
+const CHUYEN_TRANG_THAI: Record<TrangThaiPhongThi, TrangThaiPhongThi[]> = {
+  dang_cho: [TrangThaiPhongThi.DANG_DIEN_RA, TrangThaiPhongThi.DA_DONG],
+  dang_dien_ra: [TrangThaiPhongThi.DA_DONG],
+  da_dong: [],
+};
+
+const mauThanhVien: Record<TrangThaiThanhVien, MauBadge> = {
+  da_tham_gia: 'blue',
+  da_nop_bai: 'green',
+  bi_loai: 'red',
+};
+
+export default function ExamRoomDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { user } = useAuth();
+  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
+
+  const [phong, setPhong] = useState<PhongThi | null>(null);
+  const [thanhViens, setThanhViens] = useState<ThanhVienPhong[]>([]);
+  const [dangTai, setDangTai] = useState(true);
+  const [dangDoi, setDangDoi] = useState(false);
+
+  const taiDuLieu = useCallback(async () => {
+    if (!id) return;
+    setDangTai(true);
+    try {
+      const [pt, tv] = await Promise.all([
+        examRoomsApi.getExamRoomById(+id),
+        examRoomsApi.getExamRoomMembers(+id),
+      ]);
+      setPhong(pt);
+      setThanhViens(tv);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangTai(false);
+    }
+  }, [id, toast]);
+
+  useEffect(() => {
+    taiDuLieu();
+  }, [taiDuLieu]);
+
+  const doiTrangThai = async (moi: TrangThaiPhongThi) => {
+    if (!phong) return;
+    setDangDoi(true);
+    try {
+      const pt = await examRoomsApi.updateExamRoomStatus(phong.maPhongThi, moi);
+      setPhong({ ...phong, trangThai: pt.trangThai });
+      toast.success(`Đã chuyển phòng sang "${NHAN_TRANG_THAI_PHONG_THI[moi]}"`);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangDoi(false);
+    }
+  };
+
+  const copyMa = () => {
+    if (!phong) return;
+    navigator.clipboard?.writeText(phong.maThamGiaPhong);
+    toast.info('Đã sao chép mã phòng');
+  };
+
+  if (dangTai) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!phong) {
+    return (
+      <div className="py-20 text-center text-gray-500">
+        Không tìm thấy phòng thi.{' '}
+        <Link to="/exam-rooms" className="text-primary hover:underline">
+          Quay lại
+        </Link>
+      </div>
+    );
+  }
+
+  const buocTiep = CHUYEN_TRANG_THAI[phong.trangThai];
+
+  const cotThanhVien: ColumnDef<ThanhVienPhong>[] = [
+    { tieuDe: '#', className: 'w-12', render: (_t, i) => i + 1 },
+    {
+      tieuDe: 'Học sinh',
+      render: (t) => (
+        <span className="font-medium text-gray-800">{t.nguoiDung?.tenNguoiDung ?? `#${t.maNguoiDung}`}</span>
+      ),
+    },
+    { tieuDe: 'Email', render: (t) => <span className="text-gray-600">{t.nguoiDung?.email ?? '—'}</span> },
+    {
+      tieuDe: 'Trạng thái',
+      render: (t) => (
+        <StatusBadge mau={mauThanhVien[t.trangThai]}>
+          {NHAN_TRANG_THAI_THANH_VIEN[t.trangThai]}
+        </StatusBadge>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        tieuDe="Chi tiết phòng thi"
+        hanhDong={
+          <Button variant="secondary" type="button" onClick={() => navigate('/exam-rooms')}>
+            ← Quay lại
+          </Button>
+        }
+      />
+
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Thẻ mã phòng */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-primary/30 bg-primary/5 p-5">
+          <p className="text-sm text-gray-500">Mã tham gia phòng</p>
+          <p className="my-1 font-mono text-3xl font-bold tracking-widest text-primary">
+            {phong.maThamGiaPhong}
+          </p>
+          <Button variant="outline" type="button" className="!px-3 !py-1.5" onClick={copyMa}>
+            📋 Sao chép
+          </Button>
+        </div>
+
+        {/* Thông tin phòng */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+            <Info nhan="Đề thi" giaTri={phong.baiThi?.tieuDe ?? `#${phong.maBaiThi}`} />
+            <Info nhan="Chế độ câu hỏi" giaTri={NHAN_CHE_DO_CAU_HOI[phong.cheDoCauHoi]} />
+            <Info nhan="Mở lúc" giaTri={formatDateTime(phong.moLuc)} />
+            <Info nhan="Đóng lúc" giaTri={formatDateTime(phong.dongLuc)} />
+            {phong.soCauChon != null && <Info nhan="Số câu chọn" giaTri={String(phong.soCauChon)} />}
+            {phong.soNguoiThamGia != null && (
+              <Info nhan="Số người tối đa" giaTri={String(phong.soNguoiThamGia)} />
+            )}
+            <div>
+              <dt className="text-gray-500">Trạng thái</dt>
+              <dd className="mt-1">
+                <StatusBadge mau={mauTrangThaiPhong[phong.trangThai]}>
+                  {NHAN_TRANG_THAI_PHONG_THI[phong.trangThai]}
+                </StatusBadge>
+              </dd>
+            </div>
+          </dl>
+
+          {laGiaoVien && buocTiep.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+              <span className="self-center text-sm text-gray-500">Chuyển trạng thái:</span>
+              {buocTiep.map((tt) => (
+                <Button
+                  key={tt}
+                  type="button"
+                  variant={tt === TrangThaiPhongThi.DA_DONG ? 'outline' : 'primary'}
+                  dangTai={dangDoi}
+                  onClick={() => doiTrangThai(tt)}
+                >
+                  {NHAN_TRANG_THAI_PHONG_THI[tt]}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-semibold text-gray-800">Thành viên ({thanhViens.length})</h2>
+        <Button variant="ghost" type="button" className="!px-2 !py-1" onClick={taiDuLieu}>
+          🔄 Làm mới
+        </Button>
+      </div>
+      <Table
+        columns={cotThanhVien}
+        data={thanhViens}
+        rowKey={(t) => t.maThanhVien}
+        rong="Chưa có thí sinh nào tham gia"
+      />
+    </div>
+  );
+}
+
+function Info({ nhan, giaTri }: { nhan: string; giaTri: string }) {
+  return (
+    <div>
+      <dt className="text-gray-500">{nhan}</dt>
+      <dd className="mt-0.5 font-medium text-gray-800">{giaTri}</dd>
+    </div>
+  );
+}
