@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
 import GuestRoute from './GuestRoute';
+import MainLayout from '@/components/layout/MainLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -9,6 +10,7 @@ import ChangePasswordPage from '@/pages/auth/ChangePasswordPage';
 import GoogleCallbackPage from '@/pages/auth/GoogleCallbackPage';
 import HomePage from '@/pages/HomePage';
 import { ForbiddenPage, NotFoundPage } from '@/pages/ErrorPages';
+import { moduleRoutes } from './moduleRoutes';
 
 export const router = createBrowserRouter([
   // Route công khai — chỉ dành cho khách (đã đăng nhập sẽ bị đẩy về '/')
@@ -29,8 +31,14 @@ export const router = createBrowserRouter([
   {
     element: <PrivateRoute />,
     children: [
-      { path: '/', element: <HomePage /> },
+      // Đổi mật khẩu: card full-screen riêng, không bọc MainLayout
       { path: '/change-password', element: <ChangePasswordPage /> },
+
+      // Các trang nghiệp vụ dùng chung khung MainLayout (Sidebar + Header)
+      {
+        element: <MainLayout />,
+        children: [{ path: '/', element: <HomePage /> }, ...moduleRoutes],
+      },
     ],
   },
 

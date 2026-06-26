@@ -1,44 +1,43 @@
 import { Link } from 'react-router-dom';
-import Button from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { NHAN_VAI_TRO } from '@/enums/vaiTro';
+import { NAV_ITEMS } from '@/components/layout/navItems';
 
-// Trang chủ tạm thời (giai đoạn nền tảng) — xác nhận luồng đăng nhập hoạt động.
+// Trang chủ: lời chào + lối tắt nhanh tới các chức năng theo vai trò.
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  if (!user) return null;
+
+  // Bỏ chính "Trang chủ" khỏi danh sách lối tắt.
+  const loiTat = NAV_ITEMS.filter(
+    (item) => item.path !== '/' && item.vaiTro.includes(user.vaiTro),
+  );
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h1 className="text-xl font-bold">Xin chào, {user?.tenNguoiDung} 👋</h1>
-        <dl className="mt-4 space-y-2 text-sm text-gray-700">
-          <div className="flex gap-2">
-            <dt className="w-28 text-gray-500">Email:</dt>
-            <dd>{user?.email}</dd>
-          </div>
-          <div className="flex gap-2">
-            <dt className="w-28 text-gray-500">Vai trò:</dt>
-            <dd>{user ? NHAN_VAI_TRO[user.vaiTro] : ''}</dd>
-          </div>
-        </dl>
-
-        <div className="mt-6 flex gap-3">
-          {user?.coMatKhau && (
-            <Link to="/change-password">
-              <Button variant="outline" type="button">
-                Đổi mật khẩu
-              </Button>
-            </Link>
-          )}
-          <Button variant="secondary" type="button" onClick={logout}>
-            Đăng xuất
-          </Button>
-        </div>
-
-        <p className="mt-6 text-sm text-gray-400">
-          Nền tảng + Auth đã sẵn sàng. Các module nghiệp vụ (môn học, câu hỏi, đề thi, phòng
-          thi, làm bài, kết quả) sẽ được bổ sung tiếp.
+    <div className="space-y-6">
+      <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-6 text-white shadow">
+        <h1 className="text-2xl font-bold">Xin chào, {user.tenNguoiDung} 👋</h1>
+        <p className="mt-1 text-white/80">
+          {NHAN_VAI_TRO[user.vaiTro]} · {user.email}
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {loiTat.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-primary hover:shadow-md"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-2xl">
+              {item.icon}
+            </span>
+            <div>
+              <p className="font-semibold text-gray-900">{item.nhan}</p>
+              <p className="text-sm text-gray-500">Truy cập {item.nhan.toLowerCase()}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
