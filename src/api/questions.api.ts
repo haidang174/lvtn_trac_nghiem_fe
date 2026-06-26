@@ -20,10 +20,18 @@ export interface CreateQuestionPayload {
 
 export type UpdateQuestionPayload = Partial<CreateQuestionPayload>;
 
+// Tham số tìm kiếm/lọc câu hỏi (lọc ở server).
+export interface QueryQuestionParams extends PaginationParams {
+  // Tìm theo nội dung câu hỏi.
+  search?: string;
+  maMonHoc?: number;
+  doKho?: DoKho;
+  loaiCauHoi?: LoaiCauHoi;
+}
+
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
-// Backend questions.findAll chỉ nhận page/limit (chưa lọc theo môn/độ khó/loại ở server).
 export const questionsApi = {
-  getQuestions: (params: PaginationParams) =>
+  getQuestions: (params: QueryQuestionParams) =>
     axiosClient.get('/questions', { params }) as unknown as Promise<PaginatedData<CauHoi>>,
 
   getQuestionById: (id: number) =>
