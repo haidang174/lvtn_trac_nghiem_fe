@@ -1,5 +1,17 @@
 import type { RouteObject } from 'react-router-dom';
+import RoleBasedRoute from './RoleBasedRoute';
+import { VaiTro } from '@/enums/vaiTro';
+import UserListPage from '@/pages/users/UserListPage';
+import UserDetailPage from '@/pages/users/UserDetailPage';
 
 // Tập hợp route của các module nghiệp vụ (nằm trong MainLayout).
-// Mỗi module bổ sung route của mình vào mảng này khi được xây dựng.
-export const moduleRoutes: RouteObject[] = [];
+export const moduleRoutes: RouteObject[] = [
+  // ----- Module Người dùng (chỉ Admin) -----
+  {
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
+    children: [
+      { path: '/users', element: <UserListPage /> },
+      { path: '/users/:id', element: <UserDetailPage /> },
+    ],
+  },
+];
