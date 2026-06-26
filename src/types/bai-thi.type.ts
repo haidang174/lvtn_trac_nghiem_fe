@@ -20,4 +20,6 @@ export interface BaiThi {
   thoiGianLamBai: number; // phút
   trangThai: TrangThaiBaiThi;
   cauHoiBaiThis?: CauHoiBaiThi[];
+  // Cờ runtime từ BE (findOne): đề đã có phòng thi hoặc bài làm => khóa sửa câu hỏi.
+  daSuDung?: boolean;
 }

@@ -39,6 +39,8 @@ export default function ExamFormPage() {
   const [timKiem, setTimKiem] = useState('');
   const [dangTai, setDangTai] = useState(true);
   const [dangLuu, setDangLuu] = useState(false);
+  // Đề đã được dùng (có phòng thi / bài làm) => khóa toàn bộ chỉnh sửa.
+  const [daKhoa, setDaKhoa] = useState(false);
 
   // Nạp môn học + ngân hàng câu hỏi + (nếu sửa) đề thi hiện có.
   const napDuLieu = useCallback(async () => {
@@ -57,6 +59,7 @@ export default function ExamFormPage() {
         setMaMonHoc(String(bt.maMonHoc));
         setThoiGian(bt.thoiGianLamBai);
         setTrangThai(bt.trangThai);
+        setDaKhoa(!!bt.daSuDung);
         const chon = (bt.cauHoiBaiThis ?? [])
           .slice()
           .sort((a, b) => a.thuTu - b.thuTu)
@@ -101,6 +104,7 @@ export default function ExamFormPage() {
 
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
+    if (daKhoa) return; // Đề đã sử dụng: không cho lưu thay đổi.
     if (!tieuDe.trim()) return toast.error('Vui lòng nhập tiêu đề');
     if (!maMonHoc) return toast.error('Vui lòng chọn môn học');
     if (thoiGian < 1) return toast.error('Thời gian làm bài phải ≥ 1 phút');
@@ -150,12 +154,19 @@ export default function ExamFormPage() {
       />
 
       <form onSubmit={xuLyLuu} className="space-y-5">
+        {daKhoa && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            🔒 Đề thi đã được dùng để tạo phòng thi hoặc đã có học sinh làm bài nên không thể
+            chỉnh sửa. Hãy tạo một đề thi mới nếu cần thay đổi.
+          </p>
+        )}
         <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Input
               label="Tiêu đề *"
               value={tieuDe}
               maxLength={100}
+              disabled={daKhoa}
               onChange={(e) => setTieuDe(e.target.value)}
               placeholder="VD: Kiểm tra giữa kỳ"
             />
@@ -164,6 +175,7 @@ export default function ExamFormPage() {
             label="Môn học *"
             placeholder="-- Chọn môn --"
             value={maMonHoc}
+            disabled={daKhoa}
             onChange={(e) => setMaMonHoc(e.target.value)}
             options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
@@ -172,11 +184,13 @@ export default function ExamFormPage() {
             type="number"
             min={1}
             value={thoiGian}
+            disabled={daKhoa}
             onChange={(e) => setThoiGian(Number(e.target.value))}
           />
           <Select
             label="Trạng thái"
             value={trangThai}
+            disabled={daKhoa}
             onChange={(e) => setTrangThai(e.target.value as TrangThaiBaiThi)}
             options={Object.values(TrangThaiBaiThi).map((v) => ({
               value: v,
@@ -209,7 +223,7 @@ export default function ExamFormPage() {
                     <button
                       type="button"
                       onClick={() => doiViTri(i, -1)}
-                      disabled={i === 0}
+                      disabled={daKhoa || i === 0}
                       className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
                       title="Lên"
                     >
@@ -218,7 +232,7 @@ export default function ExamFormPage() {
                     <button
                       type="button"
                       onClick={() => doiViTri(i, 1)}
-                      disabled={i === daChon.length - 1}
+                      disabled={daKhoa || i === daChon.length - 1}
                       className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-30"
                       title="Xuống"
                     >
@@ -227,7 +241,8 @@ export default function ExamFormPage() {
                     <button
                       type="button"
                       onClick={() => boCauHoi(c.maCauHoi)}
-                      className="shrink-0 rounded p-1 text-red-500 hover:bg-red-50"
+                      disabled={daKhoa}
+                      className="shrink-0 rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent"
                       title="Bỏ khỏi đề"
                     >
                       ✕
@@ -261,7 +276,8 @@ export default function ExamFormPage() {
                     <button
                       type="button"
                       onClick={() => themCauHoi(q)}
-                      className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+                      disabled={daKhoa}
+                      className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary/10"
                     >
                       + Thêm
                     </button>
@@ -276,7 +292,7 @@ export default function ExamFormPage() {
           <Button variant="secondary" type="button" onClick={() => navigate('/exams')}>
             Hủy
           </Button>
-          <Button type="submit" dangTai={dangLuu}>
+          <Button type="submit" dangTai={dangLuu} disabled={daKhoa}>
             {laSua ? 'Lưu thay đổi' : 'Tạo đề thi'}
           </Button>
         </div>
