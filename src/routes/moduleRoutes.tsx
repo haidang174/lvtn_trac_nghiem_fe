@@ -4,6 +4,7 @@ import { VaiTro } from '@/enums/vaiTro';
 import UserListPage from '@/pages/users/UserListPage';
 import UserDetailPage from '@/pages/users/UserDetailPage';
 import SubjectListPage from '@/pages/subjects/SubjectListPage';
+import SubjectDetailPage from '@/pages/subjects/SubjectDetailPage';
 import QuestionListPage from '@/pages/questions/QuestionListPage';
 import QuestionFormPage from '@/pages/questions/QuestionFormPage';
 import QuestionDetailPage from '@/pages/questions/QuestionDetailPage';
@@ -36,7 +37,10 @@ export const moduleRoutes: RouteObject[] = [
   // ----- Module Môn học (GV + Admin) -----
   {
     element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
-    children: [{ path: '/subjects', element: <SubjectListPage /> }],
+    children: [
+      { path: '/subjects', element: <SubjectListPage /> },
+      { path: '/subjects/:id', element: <SubjectDetailPage /> },
+    ],
   },
 
   // ----- Module Câu hỏi (GV + Admin) -----

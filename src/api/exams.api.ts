@@ -19,10 +19,14 @@ export interface CreateExamPayload {
 
 export type UpdateExamPayload = Partial<CreateExamPayload>;
 
+export interface QueryExamParams extends PaginationParams {
+  maMonHoc?: number;
+  trangThai?: TrangThaiBaiThi;
+}
+
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
-// Backend exams.findAll chỉ nhận page/limit (chưa lọc theo môn/trạng thái ở server).
 export const examsApi = {
-  getExams: (params: PaginationParams) =>
+  getExams: (params: QueryExamParams) =>
     axiosClient.get('/exams', { params }) as unknown as Promise<PaginatedData<BaiThi>>,
 
   getExamById: (id: number) =>

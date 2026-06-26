@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
@@ -16,6 +17,7 @@ import { useToast } from '@/hooks/useToast';
 import type { MonHoc } from '@/types/mon-hoc.type';
 
 export default function SubjectListPage() {
+  const navigate = useNavigate();
   const { page, limit, setPage, resetPage } = usePagination();
   const [tuKhoa, setTuKhoa] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('');
@@ -87,7 +89,14 @@ export default function SubjectListPage() {
   const columns: ColumnDef<MonHoc>[] = [
     {
       tieuDe: 'Tên môn học',
-      render: (m) => <span className="font-medium text-gray-900">{m.tenMonHoc}</span>,
+      render: (m) => (
+        <button
+          onClick={() => navigate(`/subjects/${m.maMonHoc}`)}
+          className="text-left font-medium text-primary hover:underline"
+        >
+          {m.tenMonHoc}
+        </button>
+      ),
     },
     { tieuDe: 'Mã định danh', render: (m) => m.maDinhDanhMon || '—' },
     {
