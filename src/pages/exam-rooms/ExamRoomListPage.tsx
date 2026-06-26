@@ -4,16 +4,20 @@ import PageHeader from '@/components/common/PageHeader';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
+import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
-import { examRoomsApi } from '@/api/examRooms.api';
-import { examsApi } from '@/api/exams.api';
+import Select from '@/components/ui/Select';
+import { examRoomsApi, type QueryExamRoomParams } from '@/api/examRooms.api';
+import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import { VaiTro } from '@/enums/vaiTro';
 import { formatDateTime } from '@/utils/formatDate';
 import { TrangThaiPhongThi, NHAN_TRANG_THAI_PHONG_THI } from '@/enums/trangThaiPhongThi';
+import type { MonHoc } from '@/types/mon-hoc.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 
 export const mauTrangThaiPhong: Record<TrangThaiPhongThi, MauBadge> = {
@@ -23,32 +27,38 @@ export const mauTrangThaiPhong: Record<TrangThaiPhongThi, MauBadge> = {
 };
 
 export default function ExamRoomListPage() {
-  const { page, limit, setPage } = usePagination();
+  const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
   const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
+  const [tuKhoa, setTuKhoa] = useState('');
+  const [locMon, setLocMon] = useState('');
+  const [locTrangThai, setLocTrangThai] = useState('');
+  const tuKhoaDebounce = useDebounce(tuKhoa);
+
   const [items, setItems] = useState<PhongThi[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
-  const [tenDe, setTenDe] = useState<Record<number, string>>({});
+  const [dsMon, setDsMon] = useState<MonHoc[]>([]);
 
+  // Nạp danh sách môn làm options cho bộ lọc.
   useEffect(() => {
-    examsApi
-      .getExams({ page: 1, limit: 1000 })
-      .then((d) => {
-        const map: Record<number, string> = {};
-        d.items.forEach((e) => (map[e.maBaiThi] = e.tieuDe));
-        setTenDe(map);
-      })
+    subjectsApi
+      .getSubjects({ page: 1, limit: 1000 })
+      .then((d) => setDsMon(d.items))
       .catch(() => undefined);
   }, []);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const data = await examRoomsApi.getExamRooms({ page, limit });
+      const params: QueryExamRoomParams = { page, limit };
+      if (tuKhoaDebounce) params.search = tuKhoaDebounce;
+      if (locMon) params.maMonHoc = Number(locMon);
+      if (locTrangThai) params.trangThai = locTrangThai as TrangThaiPhongThi;
+      const data = await examRoomsApi.getExamRooms(params);
       setItems(data.items);
       setTotal(data.total);
     } catch (err) {
@@ -56,11 +66,16 @@ export default function ExamRoomListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, toast]);
+  }, [page, limit, tuKhoaDebounce, locMon, locTrangThai, toast]);
 
   useEffect(() => {
     taiDuLieu();
   }, [taiDuLieu]);
+
+  // Đổi từ khóa/bộ lọc → quay về trang 1.
+  useEffect(() => {
+    resetPage();
+  }, [tuKhoaDebounce, locMon, locTrangThai, resetPage]);
 
   const columns: ColumnDef<PhongThi>[] = [
     {
@@ -74,7 +89,8 @@ export default function ExamRoomListPage() {
         </button>
       ),
     },
-    { tieuDe: 'Đề thi', render: (p) => tenDe[p.maBaiThi] ?? `#${p.maBaiThi}` },
+    { tieuDe: 'Đề thi', render: (p) => p.baiThi?.tieuDe ?? `#${p.maBaiThi}` },
+    { tieuDe: 'Môn học', render: (p) => p.baiThi?.monHoc?.tenMonHoc ?? '—' },
     { tieuDe: 'Mở lúc', render: (p) => formatDateTime(p.moLuc) },
     { tieuDe: 'Đóng lúc', render: (p) => formatDateTime(p.dongLuc) },
     {
@@ -115,12 +131,35 @@ export default function ExamRoomListPage() {
         }
       />
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <SearchInput
+          placeholder="Tìm theo tên đề thi..."
+          value={tuKhoa}
+          onChange={(e) => setTuKhoa(e.target.value)}
+        />
+        <Select
+          placeholder="-- Tất cả môn học --"
+          value={locMon}
+          onChange={(e) => setLocMon(e.target.value)}
+          options={dsMon.map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
+        />
+        <Select
+          placeholder="-- Tất cả trạng thái --"
+          value={locTrangThai}
+          onChange={(e) => setLocTrangThai(e.target.value)}
+          options={Object.values(TrangThaiPhongThi).map((v) => ({
+            value: v,
+            label: NHAN_TRANG_THAI_PHONG_THI[v],
+          }))}
+        />
+      </div>
+
       <Table
         columns={columns}
         data={items}
         rowKey={(p) => p.maPhongThi}
         dangTai={dangTai}
-        rong="Chưa có phòng thi nào"
+        rong="Không tìm thấy phòng thi nào"
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />

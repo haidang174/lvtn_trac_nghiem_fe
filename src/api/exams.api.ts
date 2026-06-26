@@ -20,6 +20,8 @@ export interface CreateExamPayload {
 export type UpdateExamPayload = Partial<CreateExamPayload>;
 
 export interface QueryExamParams extends PaginationParams {
+  // Tìm theo tiêu đề đề thi.
+  search?: string;
   maMonHoc?: number;
   trangThai?: TrangThaiBaiThi;
 }

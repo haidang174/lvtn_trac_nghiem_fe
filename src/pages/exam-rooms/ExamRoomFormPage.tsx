@@ -9,7 +9,7 @@ import { examRoomsApi } from '@/api/examRooms.api';
 import { examsApi } from '@/api/exams.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
-import { localToISO } from '@/utils/formatDate';
+import { localToISO, nowLocalInput } from '@/utils/formatDate';
 import { CheDoCauHoi, NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
 import { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { BaiThi } from '@/types/bai-thi.type';
@@ -38,10 +38,27 @@ export default function ExamRoomFormPage() {
       .finally(() => setDangTai(false));
   }, [toast]);
 
+  // Đổi giờ mở: nếu giờ đóng đang chọn không còn hợp lệ (<= giờ mở) thì xóa để buộc chọn lại.
+  const doiMoLuc = (v: string) => {
+    setMoLuc(v);
+    if (dongLuc && v && new Date(dongLuc) <= new Date(v)) setDongLuc('');
+  };
+
+  // Đổi giờ đóng: chặn chọn giờ <= giờ mở (min của datetime-local không khóa được phần giờ).
+  const doiDongLuc = (v: string) => {
+    if (v && moLuc && new Date(v) <= new Date(moLuc)) {
+      toast.error('Thời gian đóng phòng phải sau thời gian mở phòng');
+      return;
+    }
+    setDongLuc(v);
+  };
+
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
     if (!maBaiThi) return toast.error('Vui lòng chọn đề thi');
     if (!moLuc || !dongLuc) return toast.error('Vui lòng nhập thời gian mở/đóng phòng');
+    if (new Date(moLuc) < new Date())
+      return toast.error('Thời gian mở phòng không được ở quá khứ');
     if (new Date(moLuc) >= new Date(dongLuc))
       return toast.error('Thời gian mở phòng phải trước thời gian đóng phòng');
     if (cheDo === CheDoCauHoi.NGAU_NHIEN && (!soCauChon || soCauChon < 1))
@@ -125,14 +142,16 @@ export default function ExamRoomFormPage() {
             <Input
               label="Mở phòng lúc *"
               type="datetime-local"
+              min={nowLocalInput()}
               value={moLuc}
-              onChange={(e) => setMoLuc(e.target.value)}
+              onChange={(e) => doiMoLuc(e.target.value)}
             />
             <Input
               label="Đóng phòng lúc *"
               type="datetime-local"
+              min={moLuc || nowLocalInput()}
               value={dongLuc}
-              onChange={(e) => setDongLuc(e.target.value)}
+              onChange={(e) => doiDongLuc(e.target.value)}
             />
           </div>
 

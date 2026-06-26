@@ -5,28 +5,38 @@ import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge from '@/components/common/StatusBadge';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
-import { examsApi } from '@/api/exams.api';
+import Select from '@/components/ui/Select';
+import { examsApi, type QueryExamParams } from '@/api/exams.api';
 import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import { VaiTro } from '@/enums/vaiTro';
 import { TrangThaiBaiThi, NHAN_TRANG_THAI_BAI_THI } from '@/enums/trangThaiBaiThi';
+import type { MonHoc } from '@/types/mon-hoc.type';
 import type { BaiThi } from '@/types/bai-thi.type';
 
 export default function ExamListPage() {
-  const { page, limit, setPage } = usePagination();
+  const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
   // Chỉ giáo viên mới được tạo/sửa/xóa (admin chỉ xem).
   const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
+  const [tuKhoa, setTuKhoa] = useState('');
+  const [locMon, setLocMon] = useState('');
+  const [locTrangThai, setLocTrangThai] = useState('');
+  const tuKhoaDebounce = useDebounce(tuKhoa);
+
   const [items, setItems] = useState<BaiThi[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
+  const [dsMon, setDsMon] = useState<MonHoc[]>([]);
   const [tenMon, setTenMon] = useState<Record<number, string>>({});
 
   const [chonXoa, setChonXoa] = useState<BaiThi | null>(null);
@@ -36,6 +46,7 @@ export default function ExamListPage() {
     subjectsApi
       .getSubjects({ page: 1, limit: 1000 })
       .then((d) => {
+        setDsMon(d.items);
         const map: Record<number, string> = {};
         d.items.forEach((m) => (map[m.maMonHoc] = m.tenMonHoc));
         setTenMon(map);
@@ -46,7 +57,11 @@ export default function ExamListPage() {
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const data = await examsApi.getExams({ page, limit });
+      const params: QueryExamParams = { page, limit };
+      if (tuKhoaDebounce) params.search = tuKhoaDebounce;
+      if (locMon) params.maMonHoc = Number(locMon);
+      if (locTrangThai) params.trangThai = locTrangThai as TrangThaiBaiThi;
+      const data = await examsApi.getExams(params);
       setItems(data.items);
       setTotal(data.total);
     } catch (err) {
@@ -54,11 +69,16 @@ export default function ExamListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, toast]);
+  }, [page, limit, tuKhoaDebounce, locMon, locTrangThai, toast]);
 
   useEffect(() => {
     taiDuLieu();
   }, [taiDuLieu]);
+
+  // Đổi từ khóa/bộ lọc → quay về trang 1.
+  useEffect(() => {
+    resetPage();
+  }, [tuKhoaDebounce, locMon, locTrangThai, resetPage]);
 
   const doiTrangThai = async (bt: BaiThi) => {
     const moi =
@@ -175,12 +195,35 @@ export default function ExamListPage() {
         }
       />
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <SearchInput
+          placeholder="Tìm theo tiêu đề đề thi..."
+          value={tuKhoa}
+          onChange={(e) => setTuKhoa(e.target.value)}
+        />
+        <Select
+          placeholder="-- Tất cả môn học --"
+          value={locMon}
+          onChange={(e) => setLocMon(e.target.value)}
+          options={dsMon.map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
+        />
+        <Select
+          placeholder="-- Tất cả trạng thái --"
+          value={locTrangThai}
+          onChange={(e) => setLocTrangThai(e.target.value)}
+          options={[
+            { value: TrangThaiBaiThi.NHAP, label: NHAN_TRANG_THAI_BAI_THI.nhap },
+            { value: TrangThaiBaiThi.CONG_KHAI, label: NHAN_TRANG_THAI_BAI_THI.cong_khai },
+          ]}
+        />
+      </div>
+
       <Table
         columns={columns}
         data={items}
         rowKey={(bt) => bt.maBaiThi}
         dangTai={dangTai}
-        rong="Chưa có đề thi nào"
+        rong="Không tìm thấy đề thi nào"
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />

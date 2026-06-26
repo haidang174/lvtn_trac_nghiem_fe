@@ -25,3 +25,9 @@ export function isoToLocalInput(value?: string | null): string {
   const tz = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - tz).toISOString().slice(0, 16);
 }
+
+// Thời điểm hiện tại theo định dạng input datetime-local ("YYYY-MM-DDTHH:mm").
+// Dùng làm min cho ô chọn thời gian (chặn chọn quá khứ).
+export function nowLocalInput(): string {
+  return isoToLocalInput(new Date().toISOString());
+}
