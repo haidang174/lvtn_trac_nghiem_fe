@@ -13,10 +13,17 @@ export interface CreateExamRoomPayload {
   soNguoiThamGia?: number;
 }
 
+export interface QueryExamRoomParams extends PaginationParams {
+  // Tìm theo tên đề thi của phòng.
+  search?: string;
+  maMonHoc?: number;
+  trangThai?: TrangThaiPhongThi;
+}
+
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
 // Backend exam-rooms: tạo + xem + danh sách thành viên + đổi trạng thái (không có sửa/xóa).
 export const examRoomsApi = {
-  getExamRooms: (params: PaginationParams) =>
+  getExamRooms: (params: QueryExamRoomParams) =>
     axiosClient.get('/exam-rooms', { params }) as unknown as Promise<PaginatedData<PhongThi>>,
 
   getExamRoomById: (id: number) =>

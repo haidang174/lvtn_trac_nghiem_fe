@@ -1,5 +1,6 @@
 import type { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { CauHoi } from './cau-hoi.type';
+import type { MonHoc } from './mon-hoc.type';
 
 // Khớp entity CAU_HOI_BAI_THI (bảng trung gian đề thi ↔ câu hỏi).
 export interface CauHoiBaiThi {
@@ -20,6 +21,8 @@ export interface BaiThi {
   thoiGianLamBai: number; // phút
   trangThai: TrangThaiBaiThi;
   cauHoiBaiThis?: CauHoiBaiThi[];
+  // Có khi BE join môn học (vd danh sách phòng thi).
+  monHoc?: MonHoc;
   // Cờ runtime từ BE (findOne): đề đã có phòng thi hoặc bài làm => khóa sửa câu hỏi.
   daSuDung?: boolean;
 }
