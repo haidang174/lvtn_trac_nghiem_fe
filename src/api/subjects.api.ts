@@ -10,9 +10,15 @@ export interface CreateSubjectPayload {
 
 export type UpdateSubjectPayload = Partial<CreateSubjectPayload>;
 
+export interface QuerySubjectParams extends PaginationParams {
+  // Tìm theo tên môn hoặc mã định danh.
+  search?: string;
+  laHoatDong?: boolean;
+}
+
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
 export const subjectsApi = {
-  getSubjects: (params: PaginationParams) =>
+  getSubjects: (params: QuerySubjectParams) =>
     axiosClient.get('/subjects', { params }) as unknown as Promise<PaginatedData<MonHoc>>,
 
   getSubjectById: (id: number) =>

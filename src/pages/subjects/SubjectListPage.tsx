@@ -4,16 +4,23 @@ import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge from '@/components/common/StatusBadge';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import SubjectFormModal from './SubjectFormModal';
-import { subjectsApi } from '@/api/subjects.api';
+import { subjectsApi, type QuerySubjectParams } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import type { MonHoc } from '@/types/mon-hoc.type';
 
 export default function SubjectListPage() {
-  const { page, limit, setPage } = usePagination();
+  const { page, limit, setPage, resetPage } = usePagination();
+  const [tuKhoa, setTuKhoa] = useState('');
+  const [locTrangThai, setLocTrangThai] = useState('');
+  const tuKhoaDebounce = useDebounce(tuKhoa);
+
   const [items, setItems] = useState<MonHoc[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
@@ -28,7 +35,10 @@ export default function SubjectListPage() {
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const data = await subjectsApi.getSubjects({ page, limit });
+      const params: QuerySubjectParams = { page, limit };
+      if (tuKhoaDebounce) params.search = tuKhoaDebounce;
+      if (locTrangThai) params.laHoatDong = locTrangThai === 'true';
+      const data = await subjectsApi.getSubjects(params);
       setItems(data.items);
       setTotal(data.total);
     } catch (err) {
@@ -36,11 +46,16 @@ export default function SubjectListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, toast]);
+  }, [page, limit, tuKhoaDebounce, locTrangThai, toast]);
 
   useEffect(() => {
     taiDuLieu();
   }, [taiDuLieu]);
+
+  // Đổi từ khóa/bộ lọc → quay về trang 1.
+  useEffect(() => {
+    resetPage();
+  }, [tuKhoaDebounce, locTrangThai, resetPage]);
 
   const doiTrangThai = async (mh: MonHoc) => {
     try {
@@ -70,7 +85,6 @@ export default function SubjectListPage() {
   };
 
   const columns: ColumnDef<MonHoc>[] = [
-    { tieuDe: 'Mã', className: 'w-20', render: (m) => `#${m.maMonHoc}` },
     {
       tieuDe: 'Tên môn học',
       render: (m) => <span className="font-medium text-gray-900">{m.tenMonHoc}</span>,
@@ -131,12 +145,29 @@ export default function SubjectListPage() {
         }
       />
 
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <SearchInput
+          placeholder="Tìm theo tên môn hoặc mã định danh..."
+          value={tuKhoa}
+          onChange={(e) => setTuKhoa(e.target.value)}
+        />
+        <Select
+          placeholder="-- Tất cả trạng thái --"
+          value={locTrangThai}
+          onChange={(e) => setLocTrangThai(e.target.value)}
+          options={[
+            { value: 'true', label: 'Hoạt động' },
+            { value: 'false', label: 'Đã khóa' },
+          ]}
+        />
+      </div>
+
       <Table
         columns={columns}
         data={items}
         rowKey={(m) => m.maMonHoc}
         dangTai={dangTai}
-        rong="Chưa có môn học nào"
+        rong="Không tìm thấy môn học nào"
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
