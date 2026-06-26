@@ -90,8 +90,18 @@ export default function ExamFormPage() {
   const themCauHoi = (q: CauHoi) =>
     setDaChon((ds) => [...ds, { maCauHoi: q.maCauHoi, noiDung: q.noiDung }]);
 
+  // Thêm toàn bộ câu hỏi đang hiển thị trong ngân hàng (theo bộ lọc) vào đề.
+  const themTatCa = () =>
+    setDaChon((ds) => [
+      ...ds,
+      ...conLai.map((q) => ({ maCauHoi: q.maCauHoi, noiDung: q.noiDung })),
+    ]);
+
   const boCauHoi = (maCauHoi: number) =>
     setDaChon((ds) => ds.filter((c) => c.maCauHoi !== maCauHoi));
+
+  // Bỏ toàn bộ câu hỏi khỏi đề.
+  const xoaTatCa = () => setDaChon([]);
 
   const doiViTri = (index: number, huong: -1 | 1) =>
     setDaChon((ds) => {
@@ -202,9 +212,19 @@ export default function ExamFormPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* Câu hỏi đã chọn */}
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 font-medium text-gray-800">
-              Câu hỏi trong đề ({daChon.length})
-            </h3>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="font-medium text-gray-800">
+                Câu hỏi trong đề ({daChon.length})
+              </h3>
+              <button
+                type="button"
+                onClick={xoaTatCa}
+                disabled={daKhoa || daChon.length === 0}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                🗑️ Xóa tất cả
+              </button>
+            </div>
             {daChon.length === 0 ? (
               <p className="py-6 text-center text-sm text-gray-400">
                 Chưa chọn câu hỏi nào. Thêm từ ngân hàng bên phải →
@@ -255,7 +275,17 @@ export default function ExamFormPage() {
 
           {/* Ngân hàng câu hỏi */}
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 font-medium text-gray-800">Ngân hàng câu hỏi</h3>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="font-medium text-gray-800">Ngân hàng câu hỏi</h3>
+              <button
+                type="button"
+                onClick={themTatCa}
+                disabled={daKhoa || conLai.length === 0}
+                className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary/10"
+              >
+                + Thêm tất cả ({conLai.length})
+              </button>
+            </div>
             <div className="mb-3">
               <SearchInput
                 placeholder="Tìm câu hỏi..."
