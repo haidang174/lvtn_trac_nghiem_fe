@@ -23,6 +23,8 @@ export interface PhienThi {
   maBaiLam: number;
   maPhongThi: number;
   maBaiThi: number;
+  tenDeThi: string;
+  tenMonHoc: string | null;
   trangThai: TrangThaiBaiLam;
   thoiGianBatDau: string;
   hanNop: string;

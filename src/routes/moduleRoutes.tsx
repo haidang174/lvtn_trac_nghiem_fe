@@ -15,7 +15,6 @@ import ExamRoomListPage from '@/pages/exam-rooms/ExamRoomListPage';
 import ExamRoomFormPage from '@/pages/exam-rooms/ExamRoomFormPage';
 import ExamRoomDetailPage from '@/pages/exam-rooms/ExamRoomDetailPage';
 import JoinRoomPage from '@/pages/exam-sessions/JoinRoomPage';
-import ExamTakingPage from '@/pages/exam-sessions/ExamTakingPage';
 import ResultHistoryPage from '@/pages/results/ResultHistoryPage';
 import ResultListPage from '@/pages/results/ResultListPage';
 import ResultDetailPage from '@/pages/results/ResultDetailPage';
@@ -85,13 +84,10 @@ export const moduleRoutes: RouteObject[] = [
     children: [{ path: '/exam-rooms/new', element: <ExamRoomFormPage /> }],
   },
 
-  // ----- Module Làm bài thi (chỉ HS) -----
+  // ----- Vào phòng thi (chỉ HS) — trang /exam/:id dùng ExamLayout riêng ở routes/index -----
   {
     element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.HOC_SINH]} />,
-    children: [
-      { path: '/join', element: <JoinRoomPage /> },
-      { path: '/exam/:id', element: <ExamTakingPage /> },
-    ],
+    children: [{ path: '/join', element: <JoinRoomPage /> }],
   },
 
   // ----- Module Kết quả: lịch sử của tôi (chỉ HS) -----

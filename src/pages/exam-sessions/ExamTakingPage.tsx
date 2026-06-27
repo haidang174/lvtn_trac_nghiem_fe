@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
+import type { ExamLayoutContext } from '@/components/layout/ExamLayout';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
@@ -26,6 +27,7 @@ export default function ExamTakingPage() {
   const maBaiLam = Number(id);
   const navigate = useNavigate();
   const toast = useToast();
+  const { datThongTinHeader } = useOutletContext<ExamLayoutContext>();
 
   const [phien, setPhien] = useState<PhienThi | null>(null);
   const [dapAn, setDapAn] = useState<Record<number, number[]>>({});
@@ -45,6 +47,7 @@ export default function ExamTakingPage() {
         const data = await examSessionsApi.getExamSession(maBaiLam);
         if (huy) return;
         setPhien(data);
+        datThongTinHeader({ tenDe: data.tenDeThi, tenMon: data.tenMonHoc });
         const map: Record<number, number[]> = {};
         data.cauHois.forEach((c) => (map[c.maCauHoi] = c.daChon ?? []));
         setDapAn(map);
@@ -66,7 +69,7 @@ export default function ExamTakingPage() {
     setDaKetThuc(true);
   }, []);
 
-  const { conLaiGiay, daKetNoi } = useExamTimer({
+  const { conLaiGiay } = useExamTimer({
     maBaiLam,
     hoatDong: !!phien && !daKetThuc,
     giayBanDau: phien?.thoiGianConLaiGiay,
@@ -252,9 +255,6 @@ export default function ExamTakingPage() {
             }`}
           >
             {dinhDangGio(conLaiGiay)}
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            {daKetNoi ? '🟢 Đã đồng bộ' : '🟡 Đang kết nối...'}
           </p>
         </div>
 
