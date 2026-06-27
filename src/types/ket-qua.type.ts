@@ -14,6 +14,8 @@ export interface KetQuaCuaToi {
   thoiGianBatDau: string;
   thoiGianNop: string;
   trangThaiBaiLam: TrangThaiBaiLam;
+  // Giờ đóng phòng — chi tiết kết quả chỉ mở sau thời điểm này.
+  dongLuc: string;
 }
 
 // Một dòng kết quả cho GV/Admin (raw từ getResults).

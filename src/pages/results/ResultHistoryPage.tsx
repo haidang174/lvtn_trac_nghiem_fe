@@ -73,16 +73,26 @@ export default function ResultHistoryPage() {
     {
       tieuDe: '',
       className: 'text-right',
-      render: (r) => (
-        <Button
-          variant="ghost"
-          type="button"
-          className="!px-2 !py-1"
-          onClick={() => navigate(`/results/${r.maKetQua}`)}
-        >
-          Xem chi tiết
-        </Button>
-      ),
+      render: (r) => {
+        const daMoChiTiet = new Date() >= new Date(r.dongLuc);
+        return daMoChiTiet ? (
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => navigate(`/results/${r.maKetQua}`)}
+          >
+            Xem chi tiết
+          </Button>
+        ) : (
+          <span
+            className="text-xs text-gray-400"
+            title="Chi tiết bài làm chỉ xem được sau khi phòng thi đóng"
+          >
+            🔒 Mở khi phòng đóng
+          </span>
+        );
+      },
     },
   ];
 
