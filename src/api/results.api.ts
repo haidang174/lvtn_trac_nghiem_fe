@@ -13,6 +13,18 @@ export interface QueryResultParams extends PaginationParams {
   maNguoiDung?: number;
 }
 
+export interface QueryMyResultParams extends PaginationParams {
+  // Tìm theo tên đề thi.
+  search?: string;
+  maMonHoc?: number;
+}
+
+// Môn học mà HS đã thi (cho bộ lọc lịch sử).
+export interface MonDaThi {
+  maMonHoc: number;
+  tenMonHoc: string;
+}
+
 export interface QueryStatsParams {
   maBaiThi?: number;
   maPhongThi?: number;
@@ -21,9 +33,13 @@ export interface QueryStatsParams {
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
 export const resultsApi = {
-  // Học sinh: lịch sử thi của mình.
-  getMyResults: (params: PaginationParams) =>
+  // Học sinh: lịch sử thi của mình (tìm tên đề + lọc môn).
+  getMyResults: (params: QueryMyResultParams) =>
     axiosClient.get('/results/me', { params }) as unknown as Promise<PaginatedData<KetQuaCuaToi>>,
+
+  // Học sinh: danh sách môn đã thi (cho bộ lọc).
+  getMySubjects: () =>
+    axiosClient.get('/results/me/subjects') as unknown as Promise<MonDaThi[]>,
 
   // GV/Admin: danh sách kết quả theo đề/phòng/người dùng.
   getResults: (params: QueryResultParams) =>

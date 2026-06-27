@@ -10,6 +10,8 @@ export interface KetQuaCuaToi {
   tongSoCau: number;
   soCauDung: number;
   tieuDe: string;
+  maMonHoc: number;
+  tenMonHoc: string | null;
   maPhongThi: number;
   thoiGianBatDau: string;
   thoiGianNop: string;
