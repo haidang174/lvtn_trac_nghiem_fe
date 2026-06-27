@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
+import type { ExamLayoutContext } from '@/components/layout/ExamLayout';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
@@ -7,6 +8,7 @@ import { examSessionsApi } from '@/api/examSessions.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
 import { useExamTimer } from '@/hooks/useExamTimer';
+import { useChongGianLan } from '@/hooks/useChongGianLan';
 import { LoaiCauHoi } from '@/enums/loaiCauHoi';
 import { TrangThaiBaiLam } from '@/enums/trangThaiBaiLam';
 import type { PhienThi, KetQuaTomTat } from '@/types/bai-lam.type';
@@ -26,6 +28,7 @@ export default function ExamTakingPage() {
   const maBaiLam = Number(id);
   const navigate = useNavigate();
   const toast = useToast();
+  const { datThongTinHeader } = useOutletContext<ExamLayoutContext>();
 
   const [phien, setPhien] = useState<PhienThi | null>(null);
   const [dapAn, setDapAn] = useState<Record<number, number[]>>({});
@@ -36,6 +39,8 @@ export default function ExamTakingPage() {
   const [daKetThuc, setDaKetThuc] = useState(false); // hết giờ/nộp xong
   const [xacNhanNop, setXacNhanNop] = useState(false);
   const [dangNop, setDangNop] = useState(false);
+  // Cảnh báo chống gian lận đang hiển thị (lần 1: nhắc nhở, lần 2: cảnh cáo).
+  const [canhBaoViPham, setCanhBaoViPham] = useState<{ soLan: number } | null>(null);
 
   // Nạp phiên thi.
   useEffect(() => {
@@ -45,6 +50,7 @@ export default function ExamTakingPage() {
         const data = await examSessionsApi.getExamSession(maBaiLam);
         if (huy) return;
         setPhien(data);
+        datThongTinHeader({ tenDe: data.tenDeThi, tenMon: data.tenMonHoc });
         const map: Record<number, number[]> = {};
         data.cauHois.forEach((c) => (map[c.maCauHoi] = c.daChon ?? []));
         setDapAn(map);
@@ -66,7 +72,7 @@ export default function ExamTakingPage() {
     setDaKetThuc(true);
   }, []);
 
-  const { conLaiGiay, daKetNoi } = useExamTimer({
+  const { conLaiGiay } = useExamTimer({
     maBaiLam,
     hoatDong: !!phien && !daKetThuc,
     giayBanDau: phien?.thoiGianConLaiGiay,
@@ -97,19 +103,41 @@ export default function ExamTakingPage() {
     luuTraLoi(maCauHoi, moi);
   };
 
-  const xacNhanNopBai = async () => {
+  const nopBaiThi = useCallback(async () => {
     setDangNop(true);
     try {
       const kq = await examSessionsApi.submitExam(maBaiLam);
       setKetQua(kq);
       setDaKetThuc(true);
       setXacNhanNop(false);
+      setCanhBaoViPham(null);
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
     } finally {
       setDangNop(false);
     }
-  };
+  }, [maBaiLam, toast]);
+
+  // ----- Chống gian lận: rời màn hình làm bài (Alt+Tab, đổi tab, app khác) -----
+  const xuLyViPham = useCallback(
+    (soLan: number) => {
+      if (soLan >= 3) {
+        // Lần 3: thông báo và tự động nộp bài (việc nộp do onVuotNguong lo).
+        setCanhBaoViPham(null);
+        toast.error('Bạn đã vi phạm quy chế thi 3 lần. Hệ thống tự động nộp bài.');
+        return;
+      }
+      // Lần 1: nhắc nhở, lần 2: cảnh cáo.
+      setCanhBaoViPham({ soLan });
+    },
+    [toast],
+  );
+
+  useChongGianLan({
+    hoatDong: !!phien && !daKetThuc && !dangTai,
+    onViPham: xuLyViPham,
+    onVuotNguong: nopBaiThi,
+  });
 
   if (dangTai) {
     return (
@@ -253,9 +281,6 @@ export default function ExamTakingPage() {
           >
             {dinhDangGio(conLaiGiay)}
           </p>
-          <p className="mt-1 text-xs text-gray-400">
-            {daKetNoi ? '🟢 Đã đồng bộ' : '🟡 Đang kết nối...'}
-          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -297,9 +322,39 @@ export default function ExamTakingPage() {
         noiDung={`Bạn đã làm ${soCauDaLam}/${phien.cauHois.length} câu. Nộp bài ngay? Sau khi nộp sẽ không thể sửa.`}
         nhanXacNhan="Nộp bài"
         dangXuLy={dangNop}
-        onXacNhan={xacNhanNopBai}
+        onXacNhan={nopBaiThi}
         onHuy={() => setXacNhanNop(false)}
       />
+
+      {/* Overlay cảnh báo chống gian lận (lần 1: nhắc nhở, lần 2: cảnh cáo). */}
+      {canhBaoViPham && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl">
+            <span className="text-5xl">⚠️</span>
+            <h2
+              className={`mt-3 text-xl font-bold ${
+                canhBaoViPham.soLan === 1 ? 'text-amber-600' : 'text-red-600'
+              }`}
+            >
+              {canhBaoViPham.soLan === 1 ? 'Nhắc nhở' : 'Cảnh cáo'}
+            </h2>
+            <p className="mt-3 text-sm text-gray-600">
+              Bạn vừa rời khỏi màn hình làm bài (chuyển tab, cửa sổ hoặc ứng dụng khác). Hành vi này
+              vi phạm quy chế thi.
+            </p>
+            <p className="mt-2 text-sm font-medium text-gray-800">
+              {canhBaoViPham.soLan === 1
+                ? 'Đây là lần vi phạm thứ 1/3. Vui lòng tập trung làm bài.'
+                : 'Đây là lần vi phạm thứ 2/3. Nếu vi phạm thêm 1 lần nữa, bài thi sẽ tự động bị nộp.'}
+            </p>
+            <div className="mt-6">
+              <Button type="button" fullWidth onClick={() => setCanhBaoViPham(null)}>
+                Tôi đã hiểu, tiếp tục làm bài
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

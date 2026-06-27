@@ -4,10 +4,13 @@ import PageHeader from '@/components/common/PageHeader';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
+import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
-import { resultsApi } from '@/api/results.api';
+import Select from '@/components/ui/Select';
+import { resultsApi, type QueryMyResultParams, type MonDaThi } from '@/api/results.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
@@ -21,18 +24,34 @@ const mauTrangThai: Record<TrangThaiBaiLam, MauBadge> = {
 };
 
 export default function ResultHistoryPage() {
-  const { page, limit, setPage } = usePagination();
+  const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
+
+  const [tuKhoa, setTuKhoa] = useState('');
+  const [locMon, setLocMon] = useState('');
+  const tuKhoaDebounce = useDebounce(tuKhoa);
 
   const [items, setItems] = useState<KetQuaCuaToi[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
+  const [dsMon, setDsMon] = useState<MonDaThi[]>([]);
+
+  // Nạp danh sách môn đã thi để làm options cho bộ lọc.
+  useEffect(() => {
+    resultsApi
+      .getMySubjects()
+      .then(setDsMon)
+      .catch(() => undefined);
+  }, []);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const data = await resultsApi.getMyResults({ page, limit });
+      const params: QueryMyResultParams = { page, limit };
+      if (tuKhoaDebounce) params.search = tuKhoaDebounce;
+      if (locMon) params.maMonHoc = Number(locMon);
+      const data = await resultsApi.getMyResults(params);
       setItems(data.items);
       setTotal(data.total);
     } catch (err) {
@@ -40,17 +59,23 @@ export default function ResultHistoryPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, toast]);
+  }, [page, limit, tuKhoaDebounce, locMon, toast]);
 
   useEffect(() => {
     taiDuLieu();
   }, [taiDuLieu]);
+
+  // Đổi từ khóa/bộ lọc → quay về trang 1.
+  useEffect(() => {
+    resetPage();
+  }, [tuKhoaDebounce, locMon, resetPage]);
 
   const columns: ColumnDef<KetQuaCuaToi>[] = [
     {
       tieuDe: 'Đề thi',
       render: (r) => <span className="font-medium text-gray-900">{r.tieuDe}</span>,
     },
+    { tieuDe: 'Môn học', render: (r) => r.tenMonHoc ?? '—' },
     {
       tieuDe: 'Điểm',
       className: 'text-center',
@@ -73,22 +98,46 @@ export default function ResultHistoryPage() {
     {
       tieuDe: '',
       className: 'text-right',
-      render: (r) => (
-        <Button
-          variant="ghost"
-          type="button"
-          className="!px-2 !py-1"
-          onClick={() => navigate(`/results/${r.maKetQua}`)}
-        >
-          Xem chi tiết
-        </Button>
-      ),
+      render: (r) => {
+        const daMoChiTiet = new Date() >= new Date(r.dongLuc);
+        return daMoChiTiet ? (
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => navigate(`/results/${r.maKetQua}`)}
+          >
+            Xem chi tiết
+          </Button>
+        ) : (
+          <span
+            className="text-xs text-gray-400"
+            title="Chi tiết bài làm chỉ xem được sau khi phòng thi đóng"
+          >
+            🔒 Mở khi phòng đóng
+          </span>
+        );
+      },
     },
   ];
 
   return (
     <div>
       <PageHeader tieuDe="Kết quả của tôi" moTa="Lịch sử các bài thi bạn đã làm" />
+
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <SearchInput
+          placeholder="Tìm theo tên đề thi..."
+          value={tuKhoa}
+          onChange={(e) => setTuKhoa(e.target.value)}
+        />
+        <Select
+          placeholder="-- Tất cả môn học --"
+          value={locMon}
+          onChange={(e) => setLocMon(e.target.value)}
+          options={dsMon.map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
+        />
+      </div>
 
       <Table
         columns={columns}

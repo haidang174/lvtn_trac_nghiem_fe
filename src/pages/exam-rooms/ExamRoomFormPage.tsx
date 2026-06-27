@@ -9,7 +9,7 @@ import { examRoomsApi } from '@/api/examRooms.api';
 import { examsApi } from '@/api/exams.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
-import { localToISO, nowLocalInput } from '@/utils/formatDate';
+import { localToISO, nowLocalInput, formatDateTime } from '@/utils/formatDate';
 import { CheDoCauHoi, NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
 import { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { BaiThi } from '@/types/bai-thi.type';
@@ -24,7 +24,6 @@ export default function ExamRoomFormPage() {
   const [cheDo, setCheDo] = useState<CheDoCauHoi>(CheDoCauHoi.THEO_THU_TU);
   const [soCauChon, setSoCauChon] = useState<number | ''>('');
   const [moLuc, setMoLuc] = useState('');
-  const [dongLuc, setDongLuc] = useState('');
   const [soNguoiThamGia, setSoNguoiThamGia] = useState<number | ''>('');
 
   const [dangTai, setDangTai] = useState(true);
@@ -38,29 +37,21 @@ export default function ExamRoomFormPage() {
       .finally(() => setDangTai(false));
   }, [toast]);
 
-  // Đổi giờ mở: nếu giờ đóng đang chọn không còn hợp lệ (<= giờ mở) thì xóa để buộc chọn lại.
-  const doiMoLuc = (v: string) => {
-    setMoLuc(v);
-    if (dongLuc && v && new Date(dongLuc) <= new Date(v)) setDongLuc('');
-  };
+  // Đề thi đang chọn (để hiển thị thời lượng + kiểm tra cửa sổ mở/đóng).
+  const deChon = deCongKhai.find((e) => e.maBaiThi === Number(maBaiThi));
 
-  // Đổi giờ đóng: chặn chọn giờ <= giờ mở (min của datetime-local không khóa được phần giờ).
-  const doiDongLuc = (v: string) => {
-    if (v && moLuc && new Date(v) <= new Date(moLuc)) {
-      toast.error('Thời gian đóng phòng phải sau thời gian mở phòng');
-      return;
-    }
-    setDongLuc(v);
-  };
+  // Giờ đóng phòng do hệ thống tự tính = giờ mở + thời lượng đề (không cho nhập).
+  const dongLucTuTinh =
+    moLuc && deChon
+      ? new Date(new Date(moLuc).getTime() + deChon.thoiGianLamBai * 60000)
+      : null;
 
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
     if (!maBaiThi) return toast.error('Vui lòng chọn đề thi');
-    if (!moLuc || !dongLuc) return toast.error('Vui lòng nhập thời gian mở/đóng phòng');
+    if (!moLuc) return toast.error('Vui lòng nhập thời gian mở phòng');
     if (new Date(moLuc) < new Date())
       return toast.error('Thời gian mở phòng không được ở quá khứ');
-    if (new Date(moLuc) >= new Date(dongLuc))
-      return toast.error('Thời gian mở phòng phải trước thời gian đóng phòng');
     if (cheDo === CheDoCauHoi.NGAU_NHIEN && (!soCauChon || soCauChon < 1))
       return toast.error('Chế độ ngẫu nhiên cần số câu chọn ≥ 1');
 
@@ -71,7 +62,6 @@ export default function ExamRoomFormPage() {
         cheDoCauHoi: cheDo,
         soCauChon: cheDo === CheDoCauHoi.NGAU_NHIEN ? Number(soCauChon) : undefined,
         moLuc: localToISO(moLuc),
-        dongLuc: localToISO(dongLuc),
         soNguoiThamGia: soNguoiThamGia ? Number(soNguoiThamGia) : undefined,
       });
       toast.success(`Đã tạo phòng thi · Mã: ${phong.maThamGiaPhong}`);
@@ -144,17 +134,18 @@ export default function ExamRoomFormPage() {
               type="datetime-local"
               min={nowLocalInput()}
               value={moLuc}
-              onChange={(e) => doiMoLuc(e.target.value)}
+              onChange={(e) => setMoLuc(e.target.value)}
             />
-            <Input
-              label="Đóng phòng lúc *"
-              type="datetime-local"
-              min={moLuc || nowLocalInput()}
-              value={dongLuc}
-              onChange={(e) => doiDongLuc(e.target.value)}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Đóng phòng lúc (tự tính)
+              </label>
+              <div className="input-base mt-1 flex items-center bg-gray-50 text-gray-700">
+                {dongLucTuTinh ? formatDateTime(dongLucTuTinh.toISOString()) : '—'}
+              </div>
+            </div>
           </div>
-
+          
           <Input
             label="Số người tham gia tối đa (tùy chọn)"
             type="number"

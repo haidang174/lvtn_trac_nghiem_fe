@@ -1,7 +1,11 @@
 import { createBrowserRouter } from 'react-router-dom';
 import PrivateRoute from './PrivateRoute';
 import GuestRoute from './GuestRoute';
+import RoleBasedRoute from './RoleBasedRoute';
+import { VaiTro } from '@/enums/vaiTro';
 import MainLayout from '@/components/layout/MainLayout';
+import ExamLayout from '@/components/layout/ExamLayout';
+import ExamTakingPage from '@/pages/exam-sessions/ExamTakingPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -38,6 +42,17 @@ export const router = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [{ path: '/', element: <HomePage /> }, ...moduleRoutes],
+      },
+
+      // Trang làm bài
+      {
+        element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.HOC_SINH]} />,
+        children: [
+          {
+            element: <ExamLayout />,
+            children: [{ path: '/exam/:id', element: <ExamTakingPage /> }],
+          },
+        ],
       },
     ],
   },
