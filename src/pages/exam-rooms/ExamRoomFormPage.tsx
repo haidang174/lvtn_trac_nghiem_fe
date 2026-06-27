@@ -38,6 +38,9 @@ export default function ExamRoomFormPage() {
       .finally(() => setDangTai(false));
   }, [toast]);
 
+  // Đề thi đang chọn (để hiển thị thời lượng + kiểm tra cửa sổ mở/đóng).
+  const deChon = deCongKhai.find((e) => e.maBaiThi === Number(maBaiThi));
+
   // Đổi giờ mở: nếu giờ đóng đang chọn không còn hợp lệ (<= giờ mở) thì xóa để buộc chọn lại.
   const doiMoLuc = (v: string) => {
     setMoLuc(v);
@@ -61,6 +64,14 @@ export default function ExamRoomFormPage() {
       return toast.error('Thời gian mở phòng không được ở quá khứ');
     if (new Date(moLuc) >= new Date(dongLuc))
       return toast.error('Thời gian mở phòng phải trước thời gian đóng phòng');
+    if (
+      deChon &&
+      new Date(dongLuc).getTime() - new Date(moLuc).getTime() <
+        deChon.thoiGianLamBai * 60000
+    )
+      return toast.error(
+        'Khoảng thời gian từ lúc mở phòng đến lúc đóng phòng phải lớn hơn hoặc bằng thời lượng của đề thi.',
+      );
     if (cheDo === CheDoCauHoi.NGAU_NHIEN && (!soCauChon || soCauChon < 1))
       return toast.error('Chế độ ngẫu nhiên cần số câu chọn ≥ 1');
 
@@ -154,6 +165,14 @@ export default function ExamRoomFormPage() {
               onChange={(e) => doiDongLuc(e.target.value)}
             />
           </div>
+
+          {deChon && (
+            <p className="-mt-2 text-xs text-gray-500">
+              Đề dài{' '}
+              <b>{deChon.thoiGianLamBai} phút</b> nên khoảng mở và đóng phải {deChon.thoiGianLamBai}{' '}
+              phút.
+            </p>
+          )}
 
           <Input
             label="Số người tham gia tối đa (tùy chọn)"
