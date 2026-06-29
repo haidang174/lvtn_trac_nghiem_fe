@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
@@ -91,7 +92,9 @@ export default function QuestionDetailPage() {
           <StatusBadge mau="purple">{NHAN_LOAI_CAU_HOI[ch.loaiCauHoi]}</StatusBadge>
         </div>
 
-        <p className="whitespace-pre-wrap text-lg font-medium text-gray-900">{ch.noiDung}</p>
+        <p className="whitespace-pre-wrap text-lg font-medium text-gray-900">
+          <MathText>{ch.noiDung}</MathText>
+        </p>
 
         {ch.hinhAnh && (
           <img
@@ -119,7 +122,9 @@ export default function QuestionDetailPage() {
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
                   {String.fromCharCode(65 + i)}
                 </span>
-                <span className="flex-1 text-gray-800">{lc.noiDung}</span>
+                <span className="flex-1 text-gray-800">
+                  <MathText>{lc.noiDung}</MathText>
+                </span>
                 {lc.laDapAnDung && <span className="text-green-600">✔ Đúng</span>}
               </li>
             ))}

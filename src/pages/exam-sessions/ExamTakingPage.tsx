@@ -4,6 +4,7 @@ import type { ExamLayoutContext } from '@/components/layout/ExamLayout';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import MathText from '@/components/common/MathText';
 import { examSessionsApi } from '@/api/examSessions.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
@@ -206,7 +207,9 @@ export default function ExamTakingPage() {
             </span>
           </div>
 
-          <p className="whitespace-pre-wrap text-lg font-medium text-gray-900">{cauHoi.noiDung}</p>
+          <p className="whitespace-pre-wrap text-lg font-medium text-gray-900">
+            <MathText>{cauHoi.noiDung}</MathText>
+          </p>
           {cauHoi.hinhAnh && (
             <img
               src={cauHoi.hinhAnh}
@@ -238,7 +241,9 @@ export default function ExamTakingPage() {
                   >
                     {String.fromCharCode(65 + i)}
                   </span>
-                  <span className="flex-1 text-gray-800">{lc.noiDung}</span>
+                  <span className="flex-1 text-gray-800">
+                    <MathText>{lc.noiDung}</MathText>
+                  </span>
                 </button>
               );
             })}

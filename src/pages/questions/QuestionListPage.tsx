@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
@@ -109,7 +110,7 @@ export default function QuestionListPage() {
           onClick={() => navigate(`/questions/${q.maCauHoi}`)}
           className="line-clamp-2 max-w-md text-left font-medium text-primary hover:underline"
         >
-          {q.noiDung}
+          <MathText>{q.noiDung}</MathText>
         </button>
       ),
     },

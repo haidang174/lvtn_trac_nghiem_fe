@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -266,7 +267,9 @@ export default function ExamFormPage() {
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                       {i + 1}
                     </span>
-                    <span className="line-clamp-1 flex-1 text-sm text-gray-700">{c.noiDung}</span>
+                    <span className="line-clamp-1 flex-1 text-sm text-gray-700">
+                      <MathText>{c.noiDung}</MathText>
+                    </span>
                     <button
                       type="button"
                       onClick={() => doiViTri(i, -1)}
@@ -333,7 +336,9 @@ export default function ExamFormPage() {
                     key={q.maCauHoi}
                     className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2"
                   >
-                    <span className="line-clamp-1 flex-1 text-sm text-gray-700">{q.noiDung}</span>
+                    <span className="line-clamp-1 flex-1 text-sm text-gray-700">
+                      <MathText>{q.noiDung}</MathText>
+                    </span>
                     <button
                       type="button"
                       onClick={() => themCauHoi(q)}
