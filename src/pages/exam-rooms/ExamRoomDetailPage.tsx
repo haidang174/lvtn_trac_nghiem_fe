@@ -68,7 +68,8 @@ export default function ExamRoomDetailPage() {
     setDangDoi(true);
     try {
       const pt = await examRoomsApi.updateExamRoomStatus(phong.maPhongThi, moi);
-      setPhong({ ...phong, trangThai: pt.trangThai });
+      // Mở sớm có thể dời lại moLuc/dongLuc -> đồng bộ luôn để hiển thị đúng.
+      setPhong({ ...phong, trangThai: pt.trangThai, moLuc: pt.moLuc, dongLuc: pt.dongLuc });
       toast.success(`Đã chuyển phòng sang "${NHAN_TRANG_THAI_PHONG_THI[moi]}"`);
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
