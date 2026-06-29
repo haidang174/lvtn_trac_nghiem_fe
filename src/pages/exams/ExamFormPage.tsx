@@ -42,16 +42,12 @@ export default function ExamFormPage() {
   // Đề đã được dùng (có phòng thi / bài làm) => khóa toàn bộ chỉnh sửa.
   const [daKhoa, setDaKhoa] = useState(false);
 
-  // Nạp môn học + ngân hàng câu hỏi + (nếu sửa) đề thi hiện có.
+  // Nạp môn học + (nếu sửa) đề thi hiện có. Ngân hàng câu hỏi tải riêng theo môn.
   const napDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const [mh, ch] = await Promise.all([
-        subjectsApi.getSubjects({ page: 1, limit: 1000 }),
-        questionsApi.getQuestions({ page: 1, limit: 1000 }),
-      ]);
+      const mh = await subjectsApi.getSubjects({ page: 1, limit: 1000 });
       setMonHocs(mh.items);
-      setNganHang(ch.items);
 
       if (laSua && id) {
         const bt = await examsApi.getExamById(+id);
@@ -78,6 +74,30 @@ export default function ExamFormPage() {
     napDuLieu();
   }, [napDuLieu]);
 
+  // Ngân hàng câu hỏi chỉ tải khi đã chọn môn học; chưa chọn thì để trống.
+  useEffect(() => {
+    if (!maMonHoc) {
+      setNganHang([]);
+      return;
+    }
+    let huy = false;
+    (async () => {
+      try {
+        const ch = await questionsApi.getQuestions({
+          page: 1,
+          limit: 1000,
+          maMonHoc: Number(maMonHoc),
+        });
+        if (!huy) setNganHang(ch.items);
+      } catch (err) {
+        if (!huy) toast.error(chuanHoaLoi(err).message);
+      }
+    })();
+    return () => {
+      huy = true;
+    };
+  }, [maMonHoc, toast]);
+
   // Ngân hàng còn lại (chưa chọn) + lọc theo từ khóa.
   const conLai = useMemo(() => {
     const daChonId = new Set(daChon.map((c) => c.maCauHoi));
@@ -86,6 +106,13 @@ export default function ExamFormPage() {
       (q) => !daChonId.has(q.maCauHoi) && (!tk || q.noiDung.toLowerCase().includes(tk)),
     );
   }, [nganHang, daChon, timKiem]);
+
+  // Đổi môn (do người dùng thao tác) → bỏ các câu đã chọn vì khác môn.
+  const doiMonHoc = (value: string) => {
+    setMaMonHoc(value);
+    setDaChon([]);
+    setTimKiem('');
+  };
 
   const themCauHoi = (q: CauHoi) =>
     setDaChon((ds) => [...ds, { maCauHoi: q.maCauHoi, noiDung: q.noiDung }]);
@@ -186,7 +213,7 @@ export default function ExamFormPage() {
             placeholder="-- Chọn môn --"
             value={maMonHoc}
             disabled={daKhoa}
-            onChange={(e) => setMaMonHoc(e.target.value)}
+            onChange={(e) => doiMonHoc(e.target.value)}
             options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
           <Input
@@ -293,8 +320,12 @@ export default function ExamFormPage() {
                 onChange={(e) => setTimKiem(e.target.value)}
               />
             </div>
-            {conLai.length === 0 ? (
-              <p className="py-6 text-center text-sm text-gray-400">Không còn câu hỏi phù hợp</p>
+            {!maMonHoc ? (
+              <p className="py-6 text-center text-sm text-gray-400">
+                Hãy chọn môn học
+              </p>
+            ) : conLai.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-400">Không có câu hỏi phù hợp</p>
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {conLai.map((q) => (
