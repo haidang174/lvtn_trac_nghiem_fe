@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import StatusBadge from '@/components/common/StatusBadge';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
@@ -116,13 +117,15 @@ export default function ExamDetailPage() {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                 {i + 1}
               </span>
-              <p className="flex-1 font-medium text-gray-900">{c.cauHoi?.noiDung ?? `Câu #${c.maCauHoi}`}</p>
+              <p className="flex-1 font-medium text-gray-900">
+                <MathText>{c.cauHoi?.noiDung ?? `Câu #${c.maCauHoi}`}</MathText>
+              </p>
             </div>
             {c.cauHoi?.luaChons && (
               <ul className="ml-9 space-y-1 text-sm text-gray-600">
                 {c.cauHoi.luaChons.map((lc, j) => (
                   <li key={lc.maLuaChon}>
-                    {String.fromCharCode(65 + j)}. {lc.noiDung}
+                    {String.fromCharCode(65 + j)}. <MathText>{lc.noiDung}</MathText>
                   </li>
                 ))}
               </ul>

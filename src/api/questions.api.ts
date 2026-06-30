@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import type { CauHoi } from '@/types/cau-hoi.type';
+import type { CauHoi, CauHoiNhap } from '@/types/cau-hoi.type';
 import type { PaginatedData, PaginationParams } from '@/types/api-response.type';
 import type { DoKho } from '@/enums/doKho';
 import type { LoaiCauHoi } from '@/enums/loaiCauHoi';
@@ -53,4 +53,17 @@ export const questionsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }) as unknown as Promise<CauHoi>;
   },
+
+  // Tải lên file Word/PDF → AI trích xuất câu hỏi nháp (KHÔNG lưu DB).
+  importQuestions: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClient.post('/questions/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }) as unknown as Promise<{ cauHois: CauHoiNhap[] }>;
+  },
+
+  // Lưu hàng loạt câu hỏi sau khi người dùng xem trước & chỉnh sửa.
+  createQuestionsBulk: (payload: { cauHois: CreateQuestionPayload[] }) =>
+    axiosClient.post('/questions/bulk', payload) as unknown as Promise<{ soLuong: number }>,
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
@@ -109,7 +110,7 @@ export default function QuestionListPage() {
           onClick={() => navigate(`/questions/${q.maCauHoi}`)}
           className="line-clamp-2 max-w-md text-left font-medium text-primary hover:underline"
         >
-          {q.noiDung}
+          <MathText>{q.noiDung}</MathText>
         </button>
       ),
     },
@@ -152,9 +153,14 @@ export default function QuestionListPage() {
         tieuDe="Ngân hàng câu hỏi"
         moTa="Quản lý câu hỏi trắc nghiệm theo môn học"
         hanhDong={
-          <Button type="button" onClick={() => navigate('/questions/new')}>
-            + Thêm câu hỏi
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={() => navigate('/questions/import')}>
+              Import từ file
+            </Button>
+            <Button type="button" onClick={() => navigate('/questions/new')}>
+              + Thêm câu hỏi
+            </Button>
+          </div>
         }
       />
 

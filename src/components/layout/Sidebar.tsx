@@ -1,4 +1,4 @@
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from './navItems';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function Sidebar({ moRa, onDong }: Props) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const items = NAV_ITEMS.filter((item) => user && item.vaiTro.includes(user.vaiTro));
 
   return (
@@ -51,27 +51,6 @@ export default function Sidebar({ moRa, onDong }: Props) {
             </NavLink>
           ))}
         </nav>
-
-        {/* Hành động tài khoản ở cuối sidebar */}
-        <div className="shrink-0 border-t border-gray-100 p-3">
-          {user?.coMatKhau && (
-            <Link
-              to="/change-password"
-              onClick={onDong}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"
-            >
-              <span className="text-lg">🔒</span>
-              Đổi mật khẩu
-            </Link>
-          )}
-          <button
-            onClick={logout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
-          >
-            <span className="text-lg">🚪</span>
-            Đăng xuất
-          </button>
-        </div>
       </aside>
     </>
   );

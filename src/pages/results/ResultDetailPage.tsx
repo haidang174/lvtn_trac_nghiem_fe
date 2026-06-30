@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
+import MathText from '@/components/common/MathText';
 import StatusBadge from '@/components/common/StatusBadge';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
@@ -93,7 +94,9 @@ export default function ResultDetailPage() {
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
                 {i + 1}
               </span>
-              <p className="flex-1 font-medium text-gray-900">{c.noiDung}</p>
+              <p className="flex-1 font-medium text-gray-900">
+                <MathText>{c.noiDung}</MathText>
+              </p>
               {c.dung ? (
                 <StatusBadge mau="green">✔ Đúng</StatusBadge>
               ) : (
@@ -114,7 +117,9 @@ export default function ResultDetailPage() {
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${lopLuaChon(lc)}`}
                 >
                   <span className="font-medium text-gray-500">{String.fromCharCode(65 + j)}.</span>
-                  <span className="flex-1 text-gray-800">{lc.noiDung}</span>
+                  <span className="flex-1 text-gray-800">
+                    <MathText>{lc.noiDung}</MathText>
+                  </span>
                   {lc.daChon && <span className="text-xs text-gray-500">Đã chọn</span>}
                   {lc.laDapAnDung && <span className="text-xs font-medium text-green-600">Đáp án đúng</span>}
                 </li>
