@@ -7,6 +7,7 @@ import SubjectListPage from '@/pages/subjects/SubjectListPage';
 import SubjectDetailPage from '@/pages/subjects/SubjectDetailPage';
 import QuestionListPage from '@/pages/questions/QuestionListPage';
 import QuestionFormPage from '@/pages/questions/QuestionFormPage';
+import QuestionImportPage from '@/pages/questions/QuestionImportPage';
 import QuestionDetailPage from '@/pages/questions/QuestionDetailPage';
 import ExamListPage from '@/pages/exams/ExamListPage';
 import ExamFormPage from '@/pages/exams/ExamFormPage';
@@ -48,6 +49,7 @@ export const moduleRoutes: RouteObject[] = [
     children: [
       { path: '/questions', element: <QuestionListPage /> },
       { path: '/questions/new', element: <QuestionFormPage /> },
+      { path: '/questions/import', element: <QuestionImportPage /> },
       { path: '/questions/:id', element: <QuestionDetailPage /> },
       { path: '/questions/:id/edit', element: <QuestionFormPage /> },
     ],

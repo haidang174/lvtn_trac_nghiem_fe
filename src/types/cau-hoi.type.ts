@@ -21,3 +21,12 @@ export interface CauHoi {
   loaiCauHoi: LoaiCauHoi;
   luaChons: LuaChon[];
 }
+
+// Câu hỏi nháp do AI trích xuất từ file (chưa lưu DB, chưa gắn môn học).
+// Dùng cho màn import xem trước/chỉnh sửa trước khi lưu hàng loạt.
+export interface CauHoiNhap {
+  noiDung: string;
+  doKho: DoKho;
+  loaiCauHoi: LoaiCauHoi;
+  luaChons: { noiDung: string; laDapAnDung: boolean }[];
+}

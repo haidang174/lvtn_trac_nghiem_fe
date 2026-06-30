@@ -153,9 +153,14 @@ export default function QuestionListPage() {
         tieuDe="Ngân hàng câu hỏi"
         moTa="Quản lý câu hỏi trắc nghiệm theo môn học"
         hanhDong={
-          <Button type="button" onClick={() => navigate('/questions/new')}>
-            + Thêm câu hỏi
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={() => navigate('/questions/import')}>
+              Import từ file
+            </Button>
+            <Button type="button" onClick={() => navigate('/questions/new')}>
+              + Thêm câu hỏi
+            </Button>
+          </div>
         }
       />
 
