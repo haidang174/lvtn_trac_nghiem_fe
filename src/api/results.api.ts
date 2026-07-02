@@ -5,6 +5,7 @@ import type {
   KetQuaItem,
   KetQuaChiTiet,
   ThongKeKetQua,
+  ThongKePhong,
 } from '@/types/ket-qua.type';
 
 export interface QueryResultParams extends PaginationParams {
@@ -31,6 +32,13 @@ export interface QueryStatsParams {
   maMonHoc?: number;
 }
 
+export interface QueryRoomStatsParams extends PaginationParams {
+  maBaiThi?: number;
+  maMonHoc?: number;
+  // Tìm theo mã phòng / tên đề thi.
+  search?: string;
+}
+
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
 export const resultsApi = {
   // Học sinh: lịch sử thi của mình (tìm tên đề + lọc môn).
@@ -48,6 +56,12 @@ export const resultsApi = {
   // GV/Admin: thống kê điểm.
   getResultStats: (params: QueryStatsParams) =>
     axiosClient.get('/results/stats', { params }) as unknown as Promise<ThongKeKetQua>,
+
+  // GV/Admin: thống kê gom nhóm theo phòng thi (tổng quan).
+  getRoomStats: (params: QueryRoomStatsParams) =>
+    axiosClient.get('/results/rooms', { params }) as unknown as Promise<
+      PaginatedData<ThongKePhong>
+    >,
 
   // Chi tiết 1 kết quả (HS xem của mình, GV xem đề của mình, Admin xem tất cả).
   getResultById: (id: number) =>

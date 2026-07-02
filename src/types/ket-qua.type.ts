@@ -26,6 +26,8 @@ export interface KetQuaItem {
   maBaiLam: number;
   maBaiThi: number;
   maNguoiDung: number;
+  tenNguoiDung: string | null;
+  email: string | null;
   diemSo: number | string;
   tongSoCau: number;
   soCauDung: number;
@@ -66,6 +68,18 @@ export interface KetQuaChiTiet {
 // Thống kê điểm.
 export interface ThongKeKetQua {
   soLuotThi: number;
+  diemTrungBinh: number;
+  diemCaoNhat: number;
+  diemThapNhat: number;
+}
+
+// Thống kê gom nhóm theo phòng thi (một dòng = một phòng).
+export interface ThongKePhong {
+  maPhongThi: number;
+  maThamGiaPhong: string;
+  tieuDe: string; // tên đề thi
+  soLuotNop: number; // tử số: số lượt đã nộp
+  tongThanhVien: number; // mẫu số: số em đã vào phòng
   diemTrungBinh: number;
   diemCaoNhat: number;
   diemThapNhat: number;

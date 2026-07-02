@@ -71,9 +71,19 @@ export default function ChangePasswordPage() {
           value={xacNhanMatKhau}
           onChange={(e) => setXacNhanMatKhau(e.target.value)}
         />
-        <Button type="submit" fullWidth dangTai={dangTai}>
-          Đổi mật khẩu
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            fullWidth
+            onClick={() => navigate(-1)}
+          >
+            Quay lại
+          </Button>
+          <Button type="submit" fullWidth dangTai={dangTai}>
+            Đổi mật khẩu
+          </Button>
+        </div>
       </form>
     </AuthLayout>
   );
