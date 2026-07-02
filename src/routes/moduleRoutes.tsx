@@ -18,6 +18,7 @@ import ExamRoomDetailPage from '@/pages/exam-rooms/ExamRoomDetailPage';
 import JoinRoomPage from '@/pages/exam-sessions/JoinRoomPage';
 import ResultHistoryPage from '@/pages/results/ResultHistoryPage';
 import ResultListPage from '@/pages/results/ResultListPage';
+import ResultRoomScorePage from '@/pages/results/ResultRoomScorePage';
 import ResultDetailPage from '@/pages/results/ResultDetailPage';
 
 // Vai trò Giáo viên + Admin (quản lý nội dung): dùng lại cho nhiều module.
@@ -97,10 +98,13 @@ export const moduleRoutes: RouteObject[] = [
     element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.HOC_SINH]} />,
     children: [{ path: '/results/me', element: <ResultHistoryPage /> }],
   },
-  // ----- Module Kết quả: danh sách + thống kê (GV + Admin) -----
+  // ----- Module Kết quả: tổng quan theo phòng + bảng điểm phòng (GV + Admin) -----
   {
     element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
-    children: [{ path: '/results', element: <ResultListPage /> }],
+    children: [
+      { path: '/results', element: <ResultListPage /> },
+      { path: '/results/rooms/:maPhongThi', element: <ResultRoomScorePage /> },
+    ],
   },
   // ----- Module Kết quả: chi tiết (cả 3 vai trò) -----
   {
