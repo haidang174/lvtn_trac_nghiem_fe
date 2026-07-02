@@ -26,6 +26,8 @@ export interface KetQuaItem {
   maBaiLam: number;
   maBaiThi: number;
   maNguoiDung: number;
+  tenNguoiDung: string | null;
+  email: string | null;
   diemSo: number | string;
   tongSoCau: number;
   soCauDung: number;

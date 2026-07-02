@@ -59,7 +59,15 @@ export default function ResultRoomScorePage() {
   }, [taiDuLieu]);
 
   const columns: ColumnDef<KetQuaItem>[] = [
-    { tieuDe: 'Học sinh', render: (r) => `#${r.maNguoiDung}` },
+    {
+      tieuDe: 'Học sinh',
+      render: (r) => (
+        <div>
+          <p className="font-medium text-gray-900">{r.tenNguoiDung ?? `#${r.maNguoiDung}`}</p>
+          {r.email && <p className="text-xs text-gray-500">{r.email}</p>}
+        </div>
+      ),
+    },
     { tieuDe: 'Đề thi', render: (r) => <span className="font-medium text-gray-900">{r.tieuDe}</span> },
     {
       tieuDe: 'Điểm',
