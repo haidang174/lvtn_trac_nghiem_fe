@@ -6,7 +6,7 @@ interface Options {
 }
 
 // Quản lý state phân trang cho danh sách (khớp PaginationDto: page, limit ở Backend).
-export function usePagination({ page = 1, limit = 20 }: Options = {}) {
+export function usePagination({ page = 1, limit = 10 }: Options = {}) {
   const [trang, setTrang] = useState(page);
   const [gioiHan, setGioiHan] = useState(limit);
 
