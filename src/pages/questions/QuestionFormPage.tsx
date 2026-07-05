@@ -274,7 +274,9 @@ export default function QuestionFormPage() {
             placeholder="-- Chọn môn --"
             value={maMonHoc}
             onChange={(e) => setMaMonHoc(e.target.value)}
-            options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
+            options={monHocs
+              .filter((m) => m.laHoatDong || String(m.maMonHoc) === String(maMonHoc))
+              .map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
           <Select
             label="Độ khó"

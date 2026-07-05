@@ -205,7 +205,9 @@ export default function ExamListPage() {
           placeholder="-- Tất cả môn học --"
           value={locMon}
           onChange={(e) => setLocMon(e.target.value)}
-          options={dsMon.map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
+          options={dsMon
+            .filter((m) => m.laHoatDong)
+            .map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
         />
         <Select
           placeholder="-- Tất cả trạng thái --"

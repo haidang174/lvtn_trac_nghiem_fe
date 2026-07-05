@@ -215,7 +215,9 @@ export default function ExamFormPage() {
             value={maMonHoc}
             disabled={daKhoa}
             onChange={(e) => doiMonHoc(e.target.value)}
-            options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
+            options={monHocs
+              .filter((m) => m.laHoatDong || String(m.maMonHoc) === String(maMonHoc))
+              .map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
           <Input
             label="Thời gian (phút) *"
