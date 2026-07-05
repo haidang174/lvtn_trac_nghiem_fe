@@ -31,7 +31,9 @@ export default function ExamRoomFormPage() {
   useEffect(() => {
     examsApi
       .getExams({ page: 1, limit: 1000 })
-      .then((d) => setDeCongKhai(d.items.filter((e) => e.trangThai === TrangThaiBaiThi.CONG_KHAI)))
+      .then((d) =>
+        setDeCongKhai(d.items.filter((e) => e.trangThai === TrangThaiBaiThi.CONG_KHAI)),
+      )
       .catch((err) => toast.error(chuanHoaLoi(err).message))
       .finally(() => setDangTai(false));
   }, [toast]);

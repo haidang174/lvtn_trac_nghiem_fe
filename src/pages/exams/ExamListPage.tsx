@@ -131,7 +131,9 @@ export default function ExamListPage() {
     {
       tieuDe: 'Trạng thái',
       render: (bt) =>
-        bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? (
+        bt.trangThai === TrangThaiBaiThi.DA_SU_DUNG ? (
+          <StatusBadge mau="blue">{NHAN_TRANG_THAI_BAI_THI.da_su_dung}</StatusBadge>
+        ) : bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? (
           <StatusBadge mau="green">{NHAN_TRANG_THAI_BAI_THI.cong_khai}</StatusBadge>
         ) : (
           <StatusBadge mau="gray">{NHAN_TRANG_THAI_BAI_THI.nhap}</StatusBadge>
@@ -143,30 +145,45 @@ export default function ExamListPage() {
       render: (bt) =>
         laGiaoVien ? (
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              type="button"
-              className="!px-2 !py-1"
-              onClick={() => navigate(`/exams/${bt.maBaiThi}/edit`)}
-            >
-              ✏️ Sửa
-            </Button>
-            <Button
-              variant="ghost"
-              type="button"
-              className="!px-2 !py-1"
-              onClick={() => doiTrangThai(bt)}
-            >
-              {bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? '🔒 Ẩn' : '📢 Công khai'}
-            </Button>
-            <Button
-              variant="ghost"
-              type="button"
-              className="!px-2 !py-1 text-red-600 hover:bg-red-50"
-              onClick={() => setChonXoa(bt)}
-            >
-              🗑️ Xóa
-            </Button>
+            {bt.trangThai !== TrangThaiBaiThi.DA_SU_DUNG && (
+              <Button
+                variant="ghost"
+                type="button"
+                className="!px-2 !py-1"
+                onClick={() => navigate(`/exams/${bt.maBaiThi}/edit`)}
+              >
+                ✏️ Sửa
+              </Button>
+            )}
+            {bt.trangThai !== TrangThaiBaiThi.DA_SU_DUNG && (
+              <Button
+                variant="ghost"
+                type="button"
+                className="!px-2 !py-1"
+                onClick={() => doiTrangThai(bt)}
+              >
+                {bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? '🔒 Ẩn' : '📢 Công khai'}
+              </Button>
+            )}
+            {bt.trangThai !== TrangThaiBaiThi.DA_SU_DUNG ? (
+              <Button
+                variant="ghost"
+                type="button"
+                className="!px-2 !py-1 text-red-600 hover:bg-red-50"
+                onClick={() => setChonXoa(bt)}
+              >
+                🗑️ Xóa
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                type="button"
+                className="!px-2 !py-1"
+                onClick={() => navigate(`/exams/${bt.maBaiThi}`)}
+              >
+                Xem
+              </Button>
+            )}
           </div>
         ) : (
           <Button
@@ -216,6 +233,7 @@ export default function ExamListPage() {
           options={[
             { value: TrangThaiBaiThi.NHAP, label: NHAN_TRANG_THAI_BAI_THI.nhap },
             { value: TrangThaiBaiThi.CONG_KHAI, label: NHAN_TRANG_THAI_BAI_THI.cong_khai },
+            { value: TrangThaiBaiThi.DA_SU_DUNG, label: NHAN_TRANG_THAI_BAI_THI.da_su_dung },
           ]}
         />
       </div>
