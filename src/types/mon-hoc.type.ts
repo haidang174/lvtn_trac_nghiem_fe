@@ -3,7 +3,6 @@ export interface MonHoc {
   maMonHoc: number;
   maNguoiDung: number;
   tenMonHoc: string;
-  maDinhDanhMon?: string | null;
   moTa?: string | null;
   laHoatDong: boolean;
 }

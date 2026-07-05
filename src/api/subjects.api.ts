@@ -4,7 +4,6 @@ import type { PaginatedData, PaginationParams } from '@/types/api-response.type'
 
 export interface CreateSubjectPayload {
   tenMonHoc: string;
-  maDinhDanhMon?: string;
   moTa?: string;
 }
 

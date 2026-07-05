@@ -18,7 +18,6 @@ interface Props {
 export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Props) {
   const laSua = !!monHoc;
   const [tenMonHoc, setTenMonHoc] = useState('');
-  const [maDinhDanhMon, setMaDinhDanhMon] = useState('');
   const [moTa, setMoTa] = useState('');
   const [dangLuu, setDangLuu] = useState(false);
   const toast = useToast();
@@ -27,7 +26,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
   useEffect(() => {
     if (moRa) {
       setTenMonHoc(monHoc?.tenMonHoc ?? '');
-      setMaDinhDanhMon(monHoc?.maDinhDanhMon ?? '');
       setMoTa(monHoc?.moTa ?? '');
     }
   }, [moRa, monHoc]);
@@ -38,7 +36,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
     try {
       const payload = {
         tenMonHoc: tenMonHoc.trim(),
-        maDinhDanhMon: maDinhDanhMon.trim() || undefined,
         moTa: moTa.trim() || undefined,
       };
       if (laSua) {
@@ -82,14 +79,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
           value={tenMonHoc}
           onChange={(e) => setTenMonHoc(e.target.value)}
           placeholder="VD: Lập trình Web"
-        />
-        <Input
-          label="Mã định danh môn"
-          name="maDinhDanhMon"
-          maxLength={20}
-          value={maDinhDanhMon}
-          onChange={(e) => setMaDinhDanhMon(e.target.value)}
-          placeholder="VD: IT4409"
         />
         <div className="space-y-1">
           <label htmlFor="moTa" className="block text-sm font-medium text-gray-700">
