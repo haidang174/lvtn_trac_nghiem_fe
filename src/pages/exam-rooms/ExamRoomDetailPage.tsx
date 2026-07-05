@@ -151,10 +151,12 @@ export default function ExamRoomDetailPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
             <Info nhan="Đề thi" giaTri={phong.baiThi?.tieuDe ?? `#${phong.maBaiThi}`} />
-            <Info nhan="Chế độ câu hỏi" giaTri={NHAN_CHE_DO_CAU_HOI[phong.cheDoCauHoi]} />
+            <Info
+              nhan="Chế độ câu hỏi"
+              giaTri={NHAN_CHE_DO_CAU_HOI[phong.cheDoCauHoi] ?? phong.cheDoCauHoi}
+            />
             <Info nhan="Mở lúc" giaTri={formatDateTime(phong.moLuc)} />
             <Info nhan="Đóng lúc" giaTri={formatDateTime(phong.dongLuc)} />
-            {phong.soCauChon != null && <Info nhan="Số câu chọn" giaTri={String(phong.soCauChon)} />}
             {phong.soNguoiThamGia != null && (
               <Info nhan="Số người tối đa" giaTri={String(phong.soNguoiThamGia)} />
             )}

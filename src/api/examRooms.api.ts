@@ -7,7 +7,6 @@ import type { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 export interface CreateExamRoomPayload {
   maBaiThi: number;
   cheDoCauHoi: CheDoCauHoi;
-  soCauChon?: number;
   moLuc: string; // ISO datetime; giờ đóng phòng do BE tự tính = moLuc + thời lượng đề.
   soNguoiThamGia?: number;
 }
