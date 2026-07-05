@@ -229,7 +229,9 @@ export default function QuestionImportPage() {
             placeholder="-- Chọn môn --"
             value={maMonHoc}
             onChange={(e) => setMaMonHoc(e.target.value)}
-            options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
+            options={monHocs
+              .filter((m) => m.laHoatDong)
+              .map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
 
           <div className="space-y-2">
@@ -290,7 +292,9 @@ export default function QuestionImportPage() {
             placeholder="-- Chọn môn --"
             value={maMonHoc}
             onChange={(e) => setMaMonHoc(e.target.value)}
-            options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
+            options={monHocs
+              .filter((m) => m.laHoatDong)
+              .map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
           />
         </div>
         <Button type="button" dangTai={dangLuu} onClick={luuTatCa}>

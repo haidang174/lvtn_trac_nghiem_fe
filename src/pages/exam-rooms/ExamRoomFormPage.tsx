@@ -22,7 +22,6 @@ export default function ExamRoomFormPage() {
   const [deCongKhai, setDeCongKhai] = useState<BaiThi[]>([]);
   const [maBaiThi, setMaBaiThi] = useState('');
   const [cheDo, setCheDo] = useState<CheDoCauHoi>(CheDoCauHoi.THEO_THU_TU);
-  const [soCauChon, setSoCauChon] = useState<number | ''>('');
   const [moLuc, setMoLuc] = useState('');
   const [soNguoiThamGia, setSoNguoiThamGia] = useState<number | ''>('');
 
@@ -32,7 +31,9 @@ export default function ExamRoomFormPage() {
   useEffect(() => {
     examsApi
       .getExams({ page: 1, limit: 1000 })
-      .then((d) => setDeCongKhai(d.items.filter((e) => e.trangThai === TrangThaiBaiThi.CONG_KHAI)))
+      .then((d) =>
+        setDeCongKhai(d.items.filter((e) => e.trangThai === TrangThaiBaiThi.CONG_KHAI)),
+      )
       .catch((err) => toast.error(chuanHoaLoi(err).message))
       .finally(() => setDangTai(false));
   }, [toast]);
@@ -52,15 +53,12 @@ export default function ExamRoomFormPage() {
     if (!moLuc) return toast.error('Vui lòng nhập thời gian mở phòng');
     if (new Date(moLuc) < new Date())
       return toast.error('Thời gian mở phòng không được ở quá khứ');
-    if (cheDo === CheDoCauHoi.NGAU_NHIEN && (!soCauChon || soCauChon < 1))
-      return toast.error('Chế độ ngẫu nhiên cần số câu chọn ≥ 1');
 
     setDangLuu(true);
     try {
       const phong = await examRoomsApi.createExamRoom({
         maBaiThi: Number(maBaiThi),
         cheDoCauHoi: cheDo,
-        soCauChon: cheDo === CheDoCauHoi.NGAU_NHIEN ? Number(soCauChon) : undefined,
         moLuc: localToISO(moLuc),
         soNguoiThamGia: soNguoiThamGia ? Number(soNguoiThamGia) : undefined,
       });
@@ -107,26 +105,15 @@ export default function ExamRoomFormPage() {
             options={deCongKhai.map((e) => ({ value: e.maBaiThi, label: e.tieuDe }))}
           />
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Select
-              label="Chế độ câu hỏi"
-              value={cheDo}
-              onChange={(e) => setCheDo(e.target.value as CheDoCauHoi)}
-              options={Object.values(CheDoCauHoi).map((v) => ({
-                value: v,
-                label: NHAN_CHE_DO_CAU_HOI[v],
-              }))}
-            />
-            {cheDo === CheDoCauHoi.NGAU_NHIEN && (
-              <Input
-                label="Số câu chọn ngẫu nhiên *"
-                type="number"
-                min={1}
-                value={soCauChon}
-                onChange={(e) => setSoCauChon(e.target.value ? Number(e.target.value) : '')}
-              />
-            )}
-          </div>
+          <Select
+            label="Chế độ câu hỏi"
+            value={cheDo}
+            onChange={(e) => setCheDo(e.target.value as CheDoCauHoi)}
+            options={Object.values(CheDoCauHoi).map((v) => ({
+              value: v,
+              label: NHAN_CHE_DO_CAU_HOI[v],
+            }))}
+          />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input

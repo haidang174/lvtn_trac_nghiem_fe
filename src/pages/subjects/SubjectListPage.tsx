@@ -98,7 +98,6 @@ export default function SubjectListPage() {
         </button>
       ),
     },
-    { tieuDe: 'Mã định danh', render: (m) => m.maDinhDanhMon || '—' },
     {
       tieuDe: 'Trạng thái',
       render: (m) =>

@@ -20,7 +20,6 @@ export interface PhongThi {
   taoBoi: number;
   maThamGiaPhong: string;
   cheDoCauHoi: CheDoCauHoi;
-  soCauChon?: number | null;
   moLuc: string;
   dongLuc: string;
   soNguoiThamGia?: number | null;

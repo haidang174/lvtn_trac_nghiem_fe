@@ -123,7 +123,6 @@ export default function SubjectDetailPage() {
     <div>
       <PageHeader
         tieuDe={monHoc.tenMonHoc}
-        moTa={monHoc.maDinhDanhMon ? `Mã định danh: ${monHoc.maDinhDanhMon}` : undefined}
         hanhDong={
           <Button variant="secondary" type="button" onClick={() => navigate('/subjects')}>
             ← Quay lại
