@@ -5,19 +5,16 @@ import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
 import SearchInput from '@/components/common/SearchInput';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { examRoomsApi, type QueryExamRoomParams } from '@/api/examRooms.api';
-import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
-import { useAuth } from '@/hooks/useAuth';
-import { VaiTro } from '@/enums/vaiTro';
 import { formatDateTime } from '@/utils/formatDate';
 import { TrangThaiPhongThi, NHAN_TRANG_THAI_PHONG_THI } from '@/enums/trangThaiPhongThi';
-import type { MonHoc } from '@/types/mon-hoc.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 
 export const mauTrangThaiPhong: Record<TrangThaiPhongThi, MauBadge> = {
@@ -30,33 +27,23 @@ export default function ExamRoomListPage() {
   const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
-  const { user } = useAuth();
-  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [tuKhoa, setTuKhoa] = useState('');
-  const [locMon, setLocMon] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('');
   const tuKhoaDebounce = useDebounce(tuKhoa);
 
   const [items, setItems] = useState<PhongThi[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
-  const [dsMon, setDsMon] = useState<MonHoc[]>([]);
 
-  // Nạp danh sách môn làm options cho bộ lọc.
-  useEffect(() => {
-    subjectsApi
-      .getSubjects({ page: 1, limit: 1000 })
-      .then((d) => setDsMon(d.items))
-      .catch(() => undefined);
-  }, []);
+  const [chonXoa, setChonXoa] = useState<PhongThi | null>(null);
+  const [dangXoa, setDangXoa] = useState(false);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
       const params: QueryExamRoomParams = { page, limit };
       if (tuKhoaDebounce) params.search = tuKhoaDebounce;
-      if (locMon) params.maMonHoc = Number(locMon);
       if (locTrangThai) params.trangThai = locTrangThai as TrangThaiPhongThi;
       const data = await examRoomsApi.getExamRooms(params);
       setItems(data.items);
@@ -66,31 +53,51 @@ export default function ExamRoomListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, tuKhoaDebounce, locMon, locTrangThai, toast]);
+  }, [page, limit, tuKhoaDebounce, locTrangThai, toast]);
 
   useEffect(() => {
     taiDuLieu();
   }, [taiDuLieu]);
 
-  // Đổi từ khóa/bộ lọc → quay về trang 1.
   useEffect(() => {
     resetPage();
-  }, [tuKhoaDebounce, locMon, locTrangThai, resetPage]);
+  }, [tuKhoaDebounce, locTrangThai, resetPage]);
+
+  const xacNhanXoa = async () => {
+    if (!chonXoa) return;
+    setDangXoa(true);
+    try {
+      await examRoomsApi.deleteExamRoom(chonXoa.maPhongThi);
+      toast.success('Đã xóa phòng thi');
+      setChonXoa(null);
+      if (items.length === 1 && page > 1) setPage(page - 1);
+      else taiDuLieu();
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangXoa(false);
+    }
+  };
 
   const columns: ColumnDef<PhongThi>[] = [
     {
-      tieuDe: 'Mã phòng',
+      tieuDe: 'Tên phòng',
       render: (p) => (
         <button
           onClick={() => navigate(`/exam-rooms/${p.maPhongThi}`)}
-          className="font-mono font-semibold tracking-wider text-primary hover:underline"
+          className="text-left font-medium text-primary hover:underline"
         >
-          {p.maThamGiaPhong}
+          {p.tenPhongThi}
         </button>
       ),
     },
-    { tieuDe: 'Đề thi', render: (p) => p.baiThi?.tieuDe ?? `#${p.maBaiThi}` },
-    { tieuDe: 'Môn học', render: (p) => p.baiThi?.monHoc?.tenMonHoc ?? '—' },
+    {
+      tieuDe: 'Môn học (học kỳ)',
+      render: (p) =>
+        p.monHocHocKy
+          ? `${p.monHocHocKy.monHoc?.tenMonHoc ?? ''} — ${p.monHocHocKy.hocKy?.tenHocKy ?? ''} ${p.monHocHocKy.hocKy?.namHoc ?? ''}`
+          : '—',
+    },
     { tieuDe: 'Mở lúc', render: (p) => formatDateTime(p.moLuc) },
     { tieuDe: 'Đóng lúc', render: (p) => formatDateTime(p.dongLuc) },
     {
@@ -103,16 +110,36 @@ export default function ExamRoomListPage() {
     },
     {
       tieuDe: '',
-      className: 'text-right',
+      className: 'text-right whitespace-nowrap',
       render: (p) => (
-        <Button
-          variant="ghost"
-          type="button"
-          className="!px-2 !py-1"
-          onClick={() => navigate(`/exam-rooms/${p.maPhongThi}`)}
-        >
-          Chi tiết
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => navigate(`/exam-rooms/${p.maPhongThi}`)}
+          >
+            Chi tiết
+          </Button>
+          {p.trangThai === TrangThaiPhongThi.DANG_CHO && (
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              onClick={() => navigate(`/exam-rooms/${p.maPhongThi}/edit`)}
+            >
+              ✏️ Sửa
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1 text-red-600 hover:bg-red-50"
+            onClick={() => setChonXoa(p)}
+          >
+            🗑️ Xóa
+          </Button>
+        </div>
       ),
     },
   ];
@@ -121,29 +148,19 @@ export default function ExamRoomListPage() {
     <div>
       <PageHeader
         tieuDe="Quản lý phòng thi"
-        moTa="Tạo phòng từ đề thi đã công khai và theo dõi thí sinh"
+        moTa="Tạo phòng từ đề công khai của giáo viên và theo dõi thí sinh"
         hanhDong={
-          laGiaoVien && (
-            <Button type="button" onClick={() => navigate('/exam-rooms/new')}>
-              + Tạo phòng thi
-            </Button>
-          )
+          <Button type="button" onClick={() => navigate('/exam-rooms/new')}>
+            + Tạo phòng thi
+          </Button>
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SearchInput
-          placeholder="Tìm theo tên đề thi..."
+          placeholder="Tìm theo tên phòng thi..."
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
-        />
-        <Select
-          placeholder="-- Tất cả môn học --"
-          value={locMon}
-          onChange={(e) => setLocMon(e.target.value)}
-          options={dsMon
-            .filter((m) => m.laHoatDong)
-            .map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
         />
         <Select
           placeholder="-- Tất cả trạng thái --"
@@ -165,6 +182,17 @@ export default function ExamRoomListPage() {
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
+
+      <ConfirmDialog
+        moRa={!!chonXoa}
+        tieuDe="Xóa phòng thi"
+        noiDung={`Xóa phòng thi "${chonXoa?.tenPhongThi}"? Phòng sẽ bị ẩn khỏi danh sách.`}
+        nhanXacNhan="Xóa"
+        nguyHiem
+        dangXuLy={dangXoa}
+        onXacNhan={xacNhanXoa}
+        onHuy={() => setChonXoa(null)}
+      />
     </div>
   );
 }
