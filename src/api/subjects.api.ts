@@ -3,6 +3,7 @@ import type { MonHoc } from '@/types/mon-hoc.type';
 import type { PaginatedData, PaginationParams } from '@/types/api-response.type';
 
 export interface CreateSubjectPayload {
+  maMon?: string;
   tenMonHoc: string;
   moTa?: string;
 }

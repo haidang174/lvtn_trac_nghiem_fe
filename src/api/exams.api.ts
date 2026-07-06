@@ -11,7 +11,7 @@ export interface ExamQuestionOrder {
 
 export interface CreateExamPayload {
   tieuDe: string;
-  maMonHoc: number;
+  maMonHocHocKy: number;
   thoiGianLamBai: number;
   trangThai?: TrangThaiBaiThi;
   cauHois: ExamQuestionOrder[];
@@ -22,7 +22,7 @@ export type UpdateExamPayload = Partial<CreateExamPayload>;
 export interface QueryExamParams extends PaginationParams {
   // Tìm theo tiêu đề đề thi.
   search?: string;
-  maMonHoc?: number;
+  maMonHocHocKy?: number;
   trangThai?: TrangThaiBaiThi;
 }
 
