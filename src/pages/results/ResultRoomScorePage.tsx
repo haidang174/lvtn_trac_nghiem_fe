@@ -97,7 +97,7 @@ export default function ResultRoomScorePage() {
   ];
 
   const tieuDe = phong
-    ? `Bảng điểm phòng ${phong.maThamGiaPhong}`
+    ? `Bảng điểm phòng ${phong.tenPhongThi}`
     : 'Bảng điểm phòng thi';
 
   return (
@@ -108,7 +108,13 @@ export default function ResultRoomScorePage() {
         </Button>
       </div>
 
-      <PageHeader tieuDe={tieuDe} moTa={phong?.baiThi?.tieuDe ?? 'Danh sách lượt nộp bài của học sinh'} />
+      <PageHeader
+        tieuDe={tieuDe}
+        moTa={
+          phong?.monHocHocKy?.monHoc?.tenMonHoc ??
+          'Danh sách lượt nộp bài của học sinh'
+        }
+      />
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

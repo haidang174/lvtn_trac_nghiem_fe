@@ -25,7 +25,13 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/subjects',
     nhan: 'Môn học',
     icon: '📚',
-    vaiTro: [VaiTro.GIAO_VIEN, VaiTro.QUAN_TRI_VIEN],
+    vaiTro: [VaiTro.QUAN_TRI_VIEN],
+  },
+  {
+    path: '/semesters',
+    nhan: 'Học kỳ',
+    icon: '🗓️',
+    vaiTro: [VaiTro.QUAN_TRI_VIEN],
   },
   {
     path: '/questions',
@@ -43,11 +49,11 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/exam-rooms',
     nhan: 'Phòng thi',
     icon: '🏫',
-    vaiTro: [VaiTro.GIAO_VIEN, VaiTro.QUAN_TRI_VIEN],
+    vaiTro: [VaiTro.QUAN_TRI_VIEN],
   },
   {
     path: '/join',
-    nhan: 'Vào thi',
+    nhan: 'Phòng thi',
     icon: '🚪',
     vaiTro: [VaiTro.HOC_SINH],
   },

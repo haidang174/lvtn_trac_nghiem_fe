@@ -8,6 +8,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import UserFormModal from './UserFormModal';
 import { usersApi, type QueryUserParams } from '@/api/users.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
@@ -30,6 +31,11 @@ export default function UserListPage() {
   // Người dùng đang chờ xác nhận khóa/mở khóa.
   const [chonDoiTrangThai, setChonDoiTrangThai] = useState<NguoiDung | null>(null);
   const [dangXuLy, setDangXuLy] = useState(false);
+
+  // null = đóng form; undefined = tạo mới; object = sửa.
+  const [formUser, setFormUser] = useState<NguoiDung | null | undefined>(null);
+  const [chonXoa, setChonXoa] = useState<NguoiDung | null>(null);
+  const [dangXoa, setDangXoa] = useState(false);
 
   const toast = useToast();
 
@@ -58,6 +64,21 @@ export default function UserListPage() {
   useEffect(() => {
     resetPage();
   }, [tuKhoaDebounce, locVaiTro, locTrangThai, resetPage]);
+
+  const xacNhanXoa = async () => {
+    if (!chonXoa) return;
+    setDangXoa(true);
+    try {
+      await usersApi.deleteUser(chonXoa.maNguoiDung);
+      toast.success('Đã xóa (khóa) người dùng');
+      setChonXoa(null);
+      taiDuLieu();
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangXoa(false);
+    }
+  };
 
   const xacNhanDoiTrangThai = async () => {
     if (!chonDoiTrangThai) return;
@@ -101,23 +122,49 @@ export default function UserListPage() {
     },
     {
       tieuDe: '',
-      className: 'text-right',
+      className: 'text-right whitespace-nowrap',
       render: (u) => (
-        <Button
-          variant={u.laHoatDong ? 'outline' : 'primary'}
-          type="button"
-          className="!px-3 !py-1.5"
-          onClick={() => setChonDoiTrangThai(u)}
-        >
-          {u.laHoatDong ? 'Khóa' : 'Mở khóa'}
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => setFormUser(u)}
+          >
+            ✏️ Sửa
+          </Button>
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => setChonDoiTrangThai(u)}
+          >
+            {u.laHoatDong ? '🔒 Khóa' : '🔓 Mở'}
+          </Button>
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1 text-red-600 hover:bg-red-50"
+            onClick={() => setChonXoa(u)}
+          >
+            🗑️ Xóa
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <div>
-      <PageHeader tieuDe="Quản lý người dùng" moTa="Danh sách tài khoản trong hệ thống" />
+      <PageHeader
+        tieuDe="Quản lý người dùng"
+        moTa="Danh sách tài khoản trong hệ thống"
+        hanhDong={
+          <Button type="button" onClick={() => setFormUser(undefined)}>
+            + Thêm người dùng
+          </Button>
+        }
+      />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SearchInput
@@ -151,6 +198,24 @@ export default function UserListPage() {
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
+
+      <UserFormModal
+        moRa={formUser !== null}
+        nguoiDung={formUser ?? null}
+        onDong={() => setFormUser(null)}
+        onLuuXong={taiDuLieu}
+      />
+
+      <ConfirmDialog
+        moRa={!!chonXoa}
+        tieuDe="Xóa người dùng"
+        noiDung={`Xóa (khóa) tài khoản "${chonXoa?.tenNguoiDung}"? Tài khoản sẽ bị vô hiệu hóa.`}
+        nhanXacNhan="Xóa"
+        nguyHiem
+        dangXuLy={dangXoa}
+        onXacNhan={xacNhanXoa}
+        onHuy={() => setChonXoa(null)}
+      />
 
       <ConfirmDialog
         moRa={!!chonDoiTrangThai}

@@ -5,6 +5,8 @@ import UserListPage from '@/pages/users/UserListPage';
 import UserDetailPage from '@/pages/users/UserDetailPage';
 import SubjectListPage from '@/pages/subjects/SubjectListPage';
 import SubjectDetailPage from '@/pages/subjects/SubjectDetailPage';
+import SemesterListPage from '@/pages/semesters/SemesterListPage';
+import SemesterDetailPage from '@/pages/semesters/SemesterDetailPage';
 import QuestionListPage from '@/pages/questions/QuestionListPage';
 import QuestionFormPage from '@/pages/questions/QuestionFormPage';
 import QuestionImportPage from '@/pages/questions/QuestionImportPage';
@@ -35,12 +37,21 @@ export const moduleRoutes: RouteObject[] = [
     ],
   },
 
-  // ----- Module Môn học (GV + Admin) -----
+  // ----- Module Môn học (chỉ Admin quản lý danh mục) -----
   {
-    element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
     children: [
       { path: '/subjects', element: <SubjectListPage /> },
       { path: '/subjects/:id', element: <SubjectDetailPage /> },
+    ],
+  },
+
+  // ----- Module Học kỳ / Mở môn / Phân công / Ghi danh (chỉ Admin) -----
+  {
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
+    children: [
+      { path: '/semesters', element: <SemesterListPage /> },
+      { path: '/semesters/:id', element: <SemesterDetailPage /> },
     ],
   },
 
@@ -73,18 +84,15 @@ export const moduleRoutes: RouteObject[] = [
     ],
   },
 
-  // ----- Module Phòng thi: xem (GV + Admin) -----
+  // ----- Module Phòng thi: Admin quản lý CRUD -----
   {
-    element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
     children: [
       { path: '/exam-rooms', element: <ExamRoomListPage /> },
+      { path: '/exam-rooms/new', element: <ExamRoomFormPage /> },
       { path: '/exam-rooms/:id', element: <ExamRoomDetailPage /> },
+      { path: '/exam-rooms/:id/edit', element: <ExamRoomFormPage /> },
     ],
-  },
-  // ----- Module Phòng thi: tạo (chỉ GV) -----
-  {
-    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.GIAO_VIEN]} />,
-    children: [{ path: '/exam-rooms/new', element: <ExamRoomFormPage /> }],
   },
 
   // ----- Vào phòng thi (chỉ HS) — trang /exam/:id dùng ExamLayout riêng ở routes/index -----

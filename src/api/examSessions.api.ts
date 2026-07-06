@@ -3,8 +3,9 @@ import type { PhienThi, CauHoiPhien, KetQuaTomTat } from '@/types/bai-lam.type';
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`. Các API này chỉ dành cho học sinh.
 export const examSessionsApi = {
-  joinExamRoom: (maThamGiaPhong: string) =>
-    axiosClient.post('/exam-sessions/join', { maThamGiaPhong }) as unknown as Promise<PhienThi>,
+  // Vào phòng theo mã phòng (quyền vào dựa trên ghi danh, không còn nhập mã).
+  joinExamRoom: (maPhongThi: number) =>
+    axiosClient.post('/exam-sessions/join', { maPhongThi }) as unknown as Promise<PhienThi>,
 
   getExamSession: (id: number) =>
     axiosClient.get(`/exam-sessions/${id}`) as unknown as Promise<PhienThi>,

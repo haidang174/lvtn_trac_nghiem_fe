@@ -9,8 +9,20 @@ export interface QueryUserParams extends PaginationParams {
   search?: string;
 }
 
+export interface CreateUserPayload {
+  tenNguoiDung: string;
+  email: string;
+  vaiTro: VaiTro;
+  matKhau?: string;
+}
+
+export interface UpdateUserPayload {
+  tenNguoiDung?: string;
+  vaiTro?: VaiTro;
+  laHoatDong?: boolean;
+}
+
 // Lưu ý: axiosClient đã unwrap { status, message, data } → trả thẳng `data`.
-// Backend users chỉ có: danh sách, chi tiết, đổi trạng thái (không có xóa).
 export const usersApi = {
   getUsers: (params: QueryUserParams) =>
     axiosClient.get('/users', { params }) as unknown as Promise<PaginatedData<NguoiDung>>,
@@ -18,6 +30,15 @@ export const usersApi = {
   getUserById: (id: number) =>
     axiosClient.get(`/users/${id}`) as unknown as Promise<NguoiDung>,
 
+  createUser: (payload: CreateUserPayload) =>
+    axiosClient.post('/users', payload) as unknown as Promise<NguoiDung>,
+
+  updateUser: (id: number, payload: UpdateUserPayload) =>
+    axiosClient.patch(`/users/${id}`, payload) as unknown as Promise<NguoiDung>,
+
   updateUserStatus: (id: number, laHoatDong: boolean) =>
     axiosClient.patch(`/users/${id}/status`, { laHoatDong }) as unknown as Promise<NguoiDung>,
+
+  deleteUser: (id: number) =>
+    axiosClient.delete(`/users/${id}`) as unknown as Promise<null>,
 };
