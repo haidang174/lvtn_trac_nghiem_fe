@@ -6,7 +6,6 @@ import StatusBadge from '@/components/common/StatusBadge';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import { examsApi } from '@/api/exams.api';
-import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,12 +30,12 @@ export default function ExamDetailPage() {
     try {
       const data = await examsApi.getExamById(+id);
       setBt(data);
-      try {
-        const mh = await subjectsApi.getSubjectById(data.maMonHoc);
-        setTenMon(mh.tenMonHoc);
-      } catch {
-        setTenMon(`#${data.maMonHoc}`);
-      }
+      const mh = data.monHocHocKy;
+      setTenMon(
+        mh
+          ? `${mh.monHoc?.tenMonHoc ?? ''} — ${mh.hocKy?.tenHocKy ?? ''} ${mh.hocKy?.namHoc ?? ''}`
+          : `#${data.maMonHocHocKy}`,
+      );
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
     } finally {

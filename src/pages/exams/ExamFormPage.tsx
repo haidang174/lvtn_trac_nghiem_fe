@@ -7,13 +7,13 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import { examsApi } from '@/api/exams.api';
-import { subjectsApi } from '@/api/subjects.api';
+import { subjectOfferingsApi } from '@/api/subjectOfferings.api';
 import { questionsApi } from '@/api/questions.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
 import { TrangThaiBaiThi, NHAN_TRANG_THAI_BAI_THI } from '@/enums/trangThaiBaiThi';
 import { DoKho, NHAN_DO_KHO } from '@/enums/doKho';
-import type { MonHoc } from '@/types/mon-hoc.type';
+import type { MonHocHocKy } from '@/types/mon-hoc-hoc-ky.type';
 import type { CauHoi } from '@/types/cau-hoi.type';
 
 // Câu hỏi đã bốc vào đề (giữ thứ tự theo mảng).
@@ -49,11 +49,11 @@ export default function ExamFormPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [monHocs, setMonHocs] = useState<MonHoc[]>([]);
+  const [offerings, setOfferings] = useState<MonHocHocKy[]>([]);
   const [nganHang, setNganHang] = useState<CauHoi[]>([]);
 
   const [tieuDe, setTieuDe] = useState('');
-  const [maMonHoc, setMaMonHoc] = useState('');
+  const [maMonHocHocKy, setMaMonHocHocKy] = useState('');
   const [thoiGian, setThoiGian] = useState(30);
   const [trangThai, setTrangThai] = useState<TrangThaiBaiThi>(TrangThaiBaiThi.NHAP);
 
@@ -79,13 +79,13 @@ export default function ExamFormPage() {
   const napDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const mh = await subjectsApi.getSubjects({ page: 1, limit: 1000 });
-      setMonHocs(mh.items);
+      const ds = await subjectOfferingsApi.getMyTeaching();
+      setOfferings(ds);
 
       if (laSua && id) {
         const bt = await examsApi.getExamById(+id);
         setTieuDe(bt.tieuDe);
-        setMaMonHoc(String(bt.maMonHoc));
+        setMaMonHocHocKy(String(bt.maMonHocHocKy));
         setThoiGian(bt.thoiGianLamBai);
         setTrangThai(bt.trangThai);
         setDaKhoa(!!bt.daSuDung);
@@ -115,9 +115,17 @@ export default function ExamFormPage() {
     napDuLieu();
   }, [napDuLieu]);
 
-  // Ngân hàng câu hỏi chỉ tải khi đã chọn môn học; chưa chọn thì để trống.
+  // Mã môn học (danh mục) tương ứng môn-học-kỳ đang chọn, để tải ngân hàng câu hỏi.
+  const maMonHocPool = useMemo(() => {
+    const o = offerings.find(
+      (x) => String(x.maMonHocHocKy) === maMonHocHocKy,
+    );
+    return o?.maMonHoc;
+  }, [offerings, maMonHocHocKy]);
+
+  // Ngân hàng câu hỏi chỉ tải khi đã chọn môn-học-kỳ; chưa chọn thì để trống.
   useEffect(() => {
-    if (!maMonHoc) {
+    if (!maMonHocPool) {
       setNganHang([]);
       return;
     }
@@ -127,7 +135,7 @@ export default function ExamFormPage() {
         const ch = await questionsApi.getQuestions({
           page: 1,
           limit: 1000,
-          maMonHoc: Number(maMonHoc),
+          maMonHoc: Number(maMonHocPool),
         });
         if (!huy) setNganHang(ch.items);
       } catch (err) {
@@ -137,7 +145,7 @@ export default function ExamFormPage() {
     return () => {
       huy = true;
     };
-  }, [maMonHoc, toast]);
+  }, [maMonHocPool, toast]);
 
   // Gom ngân hàng theo độ khó -> dùng làm pool bốc & hiển thị số có sẵn.
   const poolTheoDoKho = useMemo(
@@ -184,7 +192,7 @@ export default function ExamFormPage() {
   // Bốc / bốc lại câu hỏi theo cấu hình hiện tại (xem trước trước khi lưu).
   const bocCauHoi = () => {
     if (daKhoa) return;
-    if (!maMonHoc) return toast.error('Vui lòng chọn môn học');
+    if (!maMonHocHocKy) return toast.error('Vui lòng chọn môn học của học kỳ');
 
     const { coCau, loi } = tinhSoCauMucTieu();
     if (loi) return toast.error(loi);
@@ -210,9 +218,9 @@ export default function ExamFormPage() {
     setDaBoc(chon);
   };
 
-  // Đổi môn (do người dùng thao tác) -> bỏ câu đã bốc & reset cấu hình vì khác môn.
-  const doiMonHoc = (value: string) => {
-    setMaMonHoc(value);
+  // Đổi môn-học-kỳ -> bỏ câu đã bốc & reset cấu hình vì khác môn.
+  const doiMonHocHocKy = (value: string) => {
+    setMaMonHocHocKy(value);
     setDaBoc([]);
     setSoCauDe(0);
     setSoCauTB(0);
@@ -223,7 +231,8 @@ export default function ExamFormPage() {
     e.preventDefault();
     if (daKhoa) return; // Đề đã sử dụng: không cho lưu thay đổi.
     if (!tieuDe.trim()) return toast.error('Vui lòng nhập tiêu đề');
-    if (!maMonHoc) return toast.error('Vui lòng chọn môn học');
+    if (!maMonHocHocKy)
+      return toast.error('Vui lòng chọn môn học của học kỳ');
     if (thoiGian < 1) return toast.error('Thời gian làm bài phải ≥ 1 phút');
     if (daBoc.length === 0)
       return toast.error('Vui lòng bốc câu hỏi trước khi lưu');
@@ -232,7 +241,7 @@ export default function ExamFormPage() {
     try {
       const payload = {
         tieuDe: tieuDe.trim(),
-        maMonHoc: Number(maMonHoc),
+        maMonHocHocKy: Number(maMonHocHocKy),
         thoiGianLamBai: thoiGian,
         trangThai,
         cauHois: daBoc.map((c, i) => ({ maCauHoi: c.maCauHoi, thuTu: i + 1 })),
@@ -293,14 +302,15 @@ export default function ExamFormPage() {
             />
           </div>
           <Select
-            label="Môn học *"
-            placeholder="-- Chọn môn --"
-            value={maMonHoc}
+            label="Môn học (học kỳ) *"
+            placeholder="-- Chọn môn học của học kỳ --"
+            value={maMonHocHocKy}
             disabled={daKhoa}
-            onChange={(e) => doiMonHoc(e.target.value)}
-            options={monHocs
-              .filter((m) => m.laHoatDong || String(m.maMonHoc) === String(maMonHoc))
-              .map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
+            onChange={(e) => doiMonHocHocKy(e.target.value)}
+            options={offerings.map((o) => ({
+              value: o.maMonHocHocKy,
+              label: `${o.monHoc?.tenMonHoc ?? 'Môn ' + o.maMonHoc} — ${o.hocKy?.tenHocKy ?? ''} ${o.hocKy?.namHoc ?? ''}`,
+            }))}
           />
           <Input
             label="Thời gian (phút) *"
@@ -356,9 +366,9 @@ export default function ExamFormPage() {
               </div>
             </div>
 
-            {!maMonHoc ? (
+            {!maMonHocHocKy ? (
               <p className="py-6 text-center text-sm text-gray-400">
-                Hãy chọn môn học để xem số câu có sẵn
+                Hãy chọn môn học của học kỳ để xem số câu có sẵn
               </p>
             ) : (
               <>

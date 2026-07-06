@@ -9,7 +9,6 @@ import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { examsApi, type QueryExamParams } from '@/api/exams.api';
-import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -17,7 +16,6 @@ import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import { VaiTro } from '@/enums/vaiTro';
 import { TrangThaiBaiThi, NHAN_TRANG_THAI_BAI_THI } from '@/enums/trangThaiBaiThi';
-import type { MonHoc } from '@/types/mon-hoc.type';
 import type { BaiThi } from '@/types/bai-thi.type';
 
 export default function ExamListPage() {
@@ -29,37 +27,21 @@ export default function ExamListPage() {
   const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [tuKhoa, setTuKhoa] = useState('');
-  const [locMon, setLocMon] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('');
   const tuKhoaDebounce = useDebounce(tuKhoa);
 
   const [items, setItems] = useState<BaiThi[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
-  const [dsMon, setDsMon] = useState<MonHoc[]>([]);
-  const [tenMon, setTenMon] = useState<Record<number, string>>({});
 
   const [chonXoa, setChonXoa] = useState<BaiThi | null>(null);
   const [dangXoa, setDangXoa] = useState(false);
-
-  useEffect(() => {
-    subjectsApi
-      .getSubjects({ page: 1, limit: 1000 })
-      .then((d) => {
-        setDsMon(d.items);
-        const map: Record<number, string> = {};
-        d.items.forEach((m) => (map[m.maMonHoc] = m.tenMonHoc));
-        setTenMon(map);
-      })
-      .catch(() => undefined);
-  }, []);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
       const params: QueryExamParams = { page, limit };
       if (tuKhoaDebounce) params.search = tuKhoaDebounce;
-      if (locMon) params.maMonHoc = Number(locMon);
       if (locTrangThai) params.trangThai = locTrangThai as TrangThaiBaiThi;
       const data = await examsApi.getExams(params);
       setItems(data.items);
@@ -69,7 +51,7 @@ export default function ExamListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, tuKhoaDebounce, locMon, locTrangThai, toast]);
+  }, [page, limit, tuKhoaDebounce, locTrangThai, toast]);
 
   useEffect(() => {
     taiDuLieu();
@@ -78,7 +60,7 @@ export default function ExamListPage() {
   // Đổi từ khóa/bộ lọc → quay về trang 1.
   useEffect(() => {
     resetPage();
-  }, [tuKhoaDebounce, locMon, locTrangThai, resetPage]);
+  }, [tuKhoaDebounce, locTrangThai, resetPage]);
 
   const doiTrangThai = async (bt: BaiThi) => {
     const moi =
@@ -122,7 +104,13 @@ export default function ExamListPage() {
         </button>
       ),
     },
-    { tieuDe: 'Môn học', render: (bt) => tenMon[bt.maMonHoc] ?? `#${bt.maMonHoc}` },
+    {
+      tieuDe: 'Môn học (học kỳ)',
+      render: (bt) =>
+        bt.monHocHocKy
+          ? `${bt.monHocHocKy.monHoc?.tenMonHoc ?? ''} — ${bt.monHocHocKy.hocKy?.tenHocKy ?? ''} ${bt.monHocHocKy.hocKy?.namHoc ?? ''}`
+          : `#${bt.maMonHocHocKy}`,
+    },
     {
       tieuDe: 'Thời gian',
       className: 'text-center',
@@ -212,19 +200,11 @@ export default function ExamListPage() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SearchInput
           placeholder="Tìm theo tiêu đề đề thi..."
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
-        />
-        <Select
-          placeholder="-- Tất cả môn học --"
-          value={locMon}
-          onChange={(e) => setLocMon(e.target.value)}
-          options={dsMon
-            .filter((m) => m.laHoatDong)
-            .map((m) => ({ value: String(m.maMonHoc), label: m.tenMonHoc }))}
         />
         <Select
           placeholder="-- Tất cả trạng thái --"
