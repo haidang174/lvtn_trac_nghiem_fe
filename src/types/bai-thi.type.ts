@@ -1,6 +1,7 @@
 import type { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { CauHoi } from './cau-hoi.type';
-import type { MonHoc } from './mon-hoc.type';
+import type { MonHocHocKy } from './mon-hoc-hoc-ky.type';
+import type { NguoiDung } from './nguoi-dung.type';
 
 // Khớp entity CAU_HOI_BAI_THI (bảng trung gian đề thi ↔ câu hỏi).
 export interface CauHoiBaiThi {
@@ -8,21 +9,21 @@ export interface CauHoiBaiThi {
   maBaiThi: number;
   maCauHoi: number;
   thuTu: number;
-  // Có khi đọc chi tiết đề (relations: cauHoiBaiThis.cauHoi.luaChons).
   cauHoi?: CauHoi;
 }
 
-// Khớp entity BAI_THI.
+// Khớp entity BAI_THI — đề thi gắn 1 môn-học-kỳ.
 export interface BaiThi {
   maBaiThi: number;
   taoBoi: number;
-  maMonHoc: number;
+  maMonHocHocKy: number;
   tieuDe: string;
   thoiGianLamBai: number; // phút
   trangThai: TrangThaiBaiThi;
   cauHoiBaiThis?: CauHoiBaiThi[];
-  // Có khi BE join môn học (vd danh sách phòng thi).
-  monHoc?: MonHoc;
+  // BE join để hiển thị môn học / học kỳ / người tạo.
+  monHocHocKy?: MonHocHocKy;
+  nguoiTao?: NguoiDung;
   // Cờ runtime từ BE (findOne): đề đã có phòng thi hoặc bài làm => khóa sửa câu hỏi.
   daSuDung?: boolean;
 }
