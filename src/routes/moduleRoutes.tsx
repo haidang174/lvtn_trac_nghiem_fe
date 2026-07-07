@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom';
 import RoleBasedRoute from './RoleBasedRoute';
 import { VaiTro } from '@/enums/vaiTro';
 import UserListPage from '@/pages/users/UserListPage';
+import UserImportPage from '@/pages/users/UserImportPage';
 import UserDetailPage from '@/pages/users/UserDetailPage';
 import SubjectListPage from '@/pages/subjects/SubjectListPage';
 import SubjectDetailPage from '@/pages/subjects/SubjectDetailPage';
@@ -33,6 +34,7 @@ export const moduleRoutes: RouteObject[] = [
     element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
     children: [
       { path: '/users', element: <UserListPage /> },
+      { path: '/users/import', element: <UserImportPage /> },
       { path: '/users/:id', element: <UserDetailPage /> },
     ],
   },

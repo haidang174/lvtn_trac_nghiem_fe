@@ -164,9 +164,16 @@ export default function UserListPage() {
         tieuDe="Quản lý người dùng"
         moTa="Danh sách tài khoản trong hệ thống"
         hanhDong={
-          <Button type="button" onClick={() => setFormUser(undefined)}>
-            + Thêm người dùng
-          </Button>
+          <div className="flex gap-2">
+            <Link to="/users/import">
+              <Button type="button" variant="secondary">
+                Nhập từ Excel
+              </Button>
+            </Link>
+            <Button type="button" onClick={() => setFormUser(undefined)}>
+              + Thêm người dùng
+            </Button>
+          </div>
         }
       />
 
