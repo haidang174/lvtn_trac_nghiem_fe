@@ -22,6 +22,20 @@ export interface UpdateUserPayload {
   laHoatDong?: boolean;
 }
 
+// Một dòng trong file import kèm kết quả kiểm tra từ BE.
+export interface DongImport {
+  tenNguoiDung: string;
+  email: string;
+  hopLe: boolean;
+  lyDo?: string;
+}
+
+export interface KetQuaImport {
+  soLuongTao: number;
+  soLuongBoQua: number;
+  danhSachBoQua: { tenNguoiDung: string; email: string; lyDo: string }[];
+}
+
 // Lưu ý: axiosClient đã unwrap { status, message, data } → trả thẳng `data`.
 export const usersApi = {
   getUsers: (params: QueryUserParams) =>
@@ -40,5 +54,18 @@ export const usersApi = {
     axiosClient.patch(`/users/${id}/status`, { laHoatDong }) as unknown as Promise<NguoiDung>,
 
   deleteUser: (id: number) =>
-    axiosClient.delete(`/users/${id}`) as unknown as Promise<null>,
+    axiosClient.delete(`/users/${id}`) as unknown as Promise<{ daXoaCung: boolean }>,
+
+  // Tải file .xlsx lên để BE đọc & kiểm tra (chưa lưu DB).
+  previewImport: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClient.post('/users/import/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }) as unknown as Promise<{ danhSach: DongImport[] }>;
+  },
+
+  // Tạo hàng loạt; BE bỏ qua dòng lỗi và báo cáo kết quả.
+  importUsers: (vaiTro: VaiTro, danhSach: { tenNguoiDung: string; email: string }[]) =>
+    axiosClient.post('/users/import', { vaiTro, danhSach }) as unknown as Promise<KetQuaImport>,
 };

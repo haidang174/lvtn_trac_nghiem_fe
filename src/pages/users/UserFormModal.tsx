@@ -101,10 +101,12 @@ export default function UserFormModal({ moRa, nguoiDung, onDong, onLuuXong }: Pr
           label="Vai trò *"
           value={vaiTro}
           onChange={(e) => setVaiTro(e.target.value as VaiTro)}
-          options={Object.values(VaiTro).map((v) => ({
-            value: v,
-            label: NHAN_VAI_TRO[v],
-          }))}
+          options={Object.values(VaiTro)
+            .filter((v) => v !== VaiTro.QUAN_TRI_VIEN)
+            .map((v) => ({
+              value: v,
+              label: NHAN_VAI_TRO[v],
+            }))}
         />
         {!laSua && (
           <Input

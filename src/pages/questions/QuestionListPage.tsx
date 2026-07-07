@@ -15,6 +15,8 @@ import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/hooks/useAuth';
+import { VaiTro } from '@/enums/vaiTro';
 import { DoKho, NHAN_DO_KHO } from '@/enums/doKho';
 import { LoaiCauHoi, NHAN_LOAI_CAU_HOI } from '@/enums/loaiCauHoi';
 import type { MonHoc } from '@/types/mon-hoc.type';
@@ -30,6 +32,9 @@ export default function QuestionListPage() {
   const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  // Chỉ GV được thêm/sửa/xóa. Admin chỉ xem và thấy cột "Người tạo".
+  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [tuKhoa, setTuKhoa] = useState('');
   const [locMon, setLocMon] = useState('');
@@ -121,30 +126,40 @@ export default function QuestionListPage() {
     },
     { tieuDe: 'Loại', render: (q) => NHAN_LOAI_CAU_HOI[q.loaiCauHoi] },
     { tieuDe: 'Số lựa chọn', className: 'text-center', render: (q) => q.luaChons?.length ?? 0 },
-    {
-      tieuDe: '',
-      className: 'text-right whitespace-nowrap',
-      render: (q) => (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1"
-            onClick={() => navigate(`/questions/${q.maCauHoi}/edit`)}
-          >
-            ✏️ Sửa
-          </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1 text-red-600 hover:bg-red-50"
-            onClick={() => setChonXoa(q)}
-          >
-            🗑️ Xóa
-          </Button>
-        </div>
-      ),
-    },
+    // Admin: xem người tạo. GV: cột thao tác sửa/xóa.
+    ...(laGiaoVien
+      ? [
+          {
+            tieuDe: '',
+            className: 'text-right whitespace-nowrap',
+            render: (q: CauHoi) => (
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  type="button"
+                  className="!px-2 !py-1"
+                  onClick={() => navigate(`/questions/${q.maCauHoi}/edit`)}
+                >
+                  ✏️ Sửa
+                </Button>
+                <Button
+                  variant="ghost"
+                  type="button"
+                  className="!px-2 !py-1 text-red-600 hover:bg-red-50"
+                  onClick={() => setChonXoa(q)}
+                >
+                  🗑️ Xóa
+                </Button>
+              </div>
+            ),
+          },
+        ]
+      : [
+          {
+            tieuDe: 'Người tạo',
+            render: (q: CauHoi) => q.nguoiTao?.tenNguoiDung ?? `#${q.taoBoi}`,
+          },
+        ]),
   ];
 
   return (
@@ -153,14 +168,16 @@ export default function QuestionListPage() {
         tieuDe="Ngân hàng câu hỏi"
         moTa="Quản lý câu hỏi trắc nghiệm theo môn học"
         hanhDong={
-          <div className="flex gap-2">
-            <Button variant="outline" type="button" onClick={() => navigate('/questions/import')}>
-              Import từ file
-            </Button>
-            <Button type="button" onClick={() => navigate('/questions/new')}>
-              + Thêm câu hỏi
-            </Button>
-          </div>
+          laGiaoVien ? (
+            <div className="flex gap-2">
+              <Button variant="outline" type="button" onClick={() => navigate('/questions/import')}>
+                Import từ file
+              </Button>
+              <Button type="button" onClick={() => navigate('/questions/new')}>
+                + Thêm câu hỏi
+              </Button>
+            </div>
+          ) : undefined
         }
       />
 

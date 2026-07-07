@@ -73,8 +73,12 @@ export default function SubjectListPage() {
     if (!chonXoa) return;
     setDangXoa(true);
     try {
-      await subjectsApi.deleteSubject(chonXoa.maMonHoc);
-      toast.success('Đã xóa môn học');
+      const ketQua = await subjectsApi.deleteSubject(chonXoa.maMonHoc);
+      toast.success(
+        ketQua.daXoaCung
+          ? 'Đã xóa môn học thành công'
+          : 'Môn học còn dữ liệu liên quan nên đã được ẩn (vô hiệu hóa)',
+      );
       setChonXoa(null);
       // Nếu xóa phần tử cuối trang → lùi về trang trước.
       if (items.length === 1 && page > 1) setPage(page - 1);
@@ -190,7 +194,7 @@ export default function SubjectListPage() {
       <ConfirmDialog
         moRa={!!chonXoa}
         tieuDe="Xóa môn học"
-        noiDung={`Xóa môn học "${chonXoa?.tenMonHoc}"? Hành động này không thể hoàn tác. Môn đang có câu hỏi/đề thi sẽ không xóa được.`}
+        noiDung={`Xóa môn học "${chonXoa?.tenMonHoc}"? Nếu môn chưa phát sinh dữ liệu sẽ bị xóa hẳn; nếu đã có câu hỏi hoặc mở trong học kỳ thì chỉ được ẩn (vô hiệu hóa).`}
         nhanXacNhan="Xóa"
         nguyHiem
         dangXuLy={dangXoa}

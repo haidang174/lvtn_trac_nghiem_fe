@@ -9,6 +9,8 @@ import { questionsApi } from '@/api/questions.api';
 import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
+import { useAuth } from '@/hooks/useAuth';
+import { VaiTro } from '@/enums/vaiTro';
 import { DoKho, NHAN_DO_KHO } from '@/enums/doKho';
 import { NHAN_LOAI_CAU_HOI } from '@/enums/loaiCauHoi';
 import type { CauHoi } from '@/types/cau-hoi.type';
@@ -19,6 +21,8 @@ export default function QuestionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [ch, setCh] = useState<CauHoi | null>(null);
   const [tenMon, setTenMon] = useState<string>('');
@@ -78,9 +82,11 @@ export default function QuestionDetailPage() {
             <Button variant="secondary" type="button" onClick={() => navigate('/questions')}>
               ← Quay lại
             </Button>
-            <Button type="button" onClick={() => navigate(`/questions/${ch.maCauHoi}/edit`)}>
-              ✏️ Sửa
-            </Button>
+            {laGiaoVien && (
+              <Button type="button" onClick={() => navigate(`/questions/${ch.maCauHoi}/edit`)}>
+                ✏️ Sửa
+              </Button>
+            )}
           </>
         }
       />
@@ -91,6 +97,12 @@ export default function QuestionDetailPage() {
           <StatusBadge mau={mauDoKho[ch.doKho]}>{NHAN_DO_KHO[ch.doKho]}</StatusBadge>
           <StatusBadge mau="purple">{NHAN_LOAI_CAU_HOI[ch.loaiCauHoi]}</StatusBadge>
         </div>
+
+        {!laGiaoVien && (
+          <p className="text-sm text-gray-500">
+            Người tạo: <span className="font-medium text-gray-700">{ch.nguoiTao?.tenNguoiDung ?? `#${ch.taoBoi}`}</span>
+          </p>
+        )}
 
         <p className="whitespace-pre-wrap text-lg font-medium text-gray-900">
           <MathText>{ch.noiDung}</MathText>

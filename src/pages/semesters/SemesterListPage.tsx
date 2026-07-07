@@ -4,7 +4,6 @@ import PageHeader from '@/components/common/PageHeader';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import StatusBadge from '@/components/common/StatusBadge';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
 import SearchInput from '@/components/common/SearchInput';
 import Button from '@/components/ui/Button';
 import SemesterFormModal from './SemesterFormModal';
@@ -26,8 +25,6 @@ export default function SemesterListPage() {
   const [dangTai, setDangTai] = useState(false);
 
   const [formHocKy, setFormHocKy] = useState<HocKy | null | undefined>(null);
-  const [chonXoa, setChonXoa] = useState<HocKy | null>(null);
-  const [dangXoa, setDangXoa] = useState(false);
 
   const toast = useToast();
 
@@ -54,22 +51,6 @@ export default function SemesterListPage() {
     resetPage();
   }, [tuKhoaDebounce, resetPage]);
 
-  const xacNhanXoa = async () => {
-    if (!chonXoa) return;
-    setDangXoa(true);
-    try {
-      await semestersApi.deleteSemester(chonXoa.maHocKy);
-      toast.success('Đã xóa học kỳ');
-      setChonXoa(null);
-      if (items.length === 1 && page > 1) setPage(page - 1);
-      else taiDuLieu();
-    } catch (err) {
-      toast.error(chuanHoaLoi(err).message);
-    } finally {
-      setDangXoa(false);
-    }
-  };
-
   const columns: ColumnDef<HocKy>[] = [
     {
       tieuDe: 'Học kỳ',
@@ -85,10 +66,10 @@ export default function SemesterListPage() {
     {
       tieuDe: 'Trạng thái',
       render: (h) =>
-        h.laHoatDong ? (
-          <StatusBadge mau="green">Hoạt động</StatusBadge>
+        h.daKetThuc ? (
+          <StatusBadge mau="gray">Đã kết thúc</StatusBadge>
         ) : (
-          <StatusBadge mau="gray">Đã khóa</StatusBadge>
+          <StatusBadge mau="green">Đang diễn ra</StatusBadge>
         ),
     },
     {
@@ -104,22 +85,16 @@ export default function SemesterListPage() {
           >
             Mở môn / phân công
           </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1"
-            onClick={() => setFormHocKy(h)}
-          >
-            ✏️ Sửa
-          </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1 text-red-600 hover:bg-red-50"
-            onClick={() => setChonXoa(h)}
-          >
-            🗑️ Xóa
-          </Button>
+          {!h.daKetThuc && (
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              onClick={() => setFormHocKy(h)}
+            >
+              ✏️ Sửa
+            </Button>
+          )}
         </div>
       ),
     },
@@ -160,17 +135,6 @@ export default function SemesterListPage() {
         hocKy={formHocKy ?? null}
         onDong={() => setFormHocKy(null)}
         onLuuXong={taiDuLieu}
-      />
-
-      <ConfirmDialog
-        moRa={!!chonXoa}
-        tieuDe="Xóa học kỳ"
-        noiDung={`Xóa học kỳ "${chonXoa?.tenHocKy} — ${chonXoa?.namHoc}"? Học kỳ sẽ bị ẩn khỏi danh sách.`}
-        nhanXacNhan="Xóa"
-        nguyHiem
-        dangXuLy={dangXoa}
-        onXacNhan={xacNhanXoa}
-        onHuy={() => setChonXoa(null)}
       />
     </div>
   );
