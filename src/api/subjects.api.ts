@@ -31,7 +31,7 @@ export const subjectsApi = {
     axiosClient.patch(`/subjects/${id}`, payload) as unknown as Promise<MonHoc>,
 
   deleteSubject: (id: number) =>
-    axiosClient.delete(`/subjects/${id}`) as unknown as Promise<null>,
+    axiosClient.delete(`/subjects/${id}`) as unknown as Promise<{ daXoaCung: boolean }>,
 
   updateSubjectStatus: (id: number, laHoatDong: boolean) =>
     axiosClient.patch(`/subjects/${id}/status`, { laHoatDong }) as unknown as Promise<MonHoc>,
