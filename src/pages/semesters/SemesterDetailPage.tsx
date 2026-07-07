@@ -138,6 +138,25 @@ export default function SemesterDetailPage() {
     }
   };
 
+  const themTatCaGv = async () => {
+    if (!chon) return;
+    const daCo = new Set(phanCongs.map((p) => p.maGiaoVien));
+    const conLai = giaoViens
+      .filter((g) => !daCo.has(g.maNguoiDung))
+      .map((g) => g.maNguoiDung);
+    if (conLai.length === 0) return toast.error('Không còn giáo viên nào để thêm');
+    try {
+      const kq = await teachingAssignmentsApi.createBulk({
+        maMonHocHocKy: chon.maMonHocHocKy,
+        maGiaoViens: conLai,
+      });
+      toast.success(`Đã phân công ${kq.soLuongPhanCong} giáo viên`);
+      taiChiTietOffering(chon);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    }
+  };
+
   const xoaGv = async (maPhanCong: number) => {
     if (!chon) return;
     try {
@@ -156,6 +175,25 @@ export default function SemesterDetailPage() {
         maHocSinh: Number(hsThem),
       });
       setHsThem('');
+      taiChiTietOffering(chon);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    }
+  };
+
+  const themTatCaHs = async () => {
+    if (!chon) return;
+    const daCo = new Set(ghiDanhs.map((g) => g.maHocSinh));
+    const conLai = hocSinhs
+      .filter((h) => !daCo.has(h.maNguoiDung))
+      .map((h) => h.maNguoiDung);
+    if (conLai.length === 0) return toast.error('Không còn học sinh nào để thêm');
+    try {
+      const kq = await enrollmentsApi.createBulk({
+        maMonHocHocKy: chon.maMonHocHocKy,
+        maHocSinhs: conLai,
+      });
+      toast.success(`Đã ghi danh ${kq.soLuongGhiDanh} học sinh`);
       taiChiTietOffering(chon);
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
@@ -310,6 +348,9 @@ export default function SemesterDetailPage() {
                     <Button type="button" onClick={themGv}>
                       + Thêm
                     </Button>
+                    <Button variant="secondary" type="button" onClick={themTatCaGv}>
+                      Tất cả
+                    </Button>
                   </div>
                 )}
                 <ul className="space-y-1">
@@ -352,6 +393,9 @@ export default function SemesterDetailPage() {
                     />
                     <Button type="button" onClick={themHs}>
                       + Ghi danh
+                    </Button>
+                    <Button variant="secondary" type="button" onClick={themTatCaHs}>
+                      Tất cả
                     </Button>
                   </div>
                 )}

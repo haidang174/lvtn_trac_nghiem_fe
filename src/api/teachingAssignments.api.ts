@@ -6,6 +6,11 @@ export interface CreateTeachingAssignmentPayload {
   maGiaoVien: number;
 }
 
+export interface BulkTeachingAssignmentPayload {
+  maMonHocHocKy: number;
+  maGiaoViens: number[];
+}
+
 export interface QueryTeachingAssignmentParams {
   maMonHocHocKy?: number;
   maGiaoVien?: number;
@@ -22,6 +27,11 @@ export const teachingAssignmentsApi = {
     axiosClient.post('/teaching-assignments', payload) as unknown as Promise<
       PhanCongGiangDay
     >,
+
+  createBulk: (payload: BulkTeachingAssignmentPayload) =>
+    axiosClient.post('/teaching-assignments/bulk', payload) as unknown as Promise<{
+      soLuongPhanCong: number;
+    }>,
 
   deleteAssignment: (id: number) =>
     axiosClient.delete(`/teaching-assignments/${id}`) as unknown as Promise<null>,
