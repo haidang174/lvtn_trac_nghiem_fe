@@ -48,7 +48,12 @@ export default function SemesterDetailPage() {
     try {
       const [hk, off, mh, gv, hs] = await Promise.all([
         semestersApi.getSemesterById(maHocKy),
-        subjectOfferingsApi.getOfferings({ page: 1, limit: 1000, maHocKy }),
+        subjectOfferingsApi.getOfferings({
+          page: 1,
+          limit: 1000,
+          maHocKy,
+          laHoatDong: true,
+        }),
         subjectsApi.getSubjects({ page: 1, limit: 1000, laHoatDong: true }),
         usersApi.getUsers({ page: 1, limit: 1000, vaiTro: VaiTro.GIAO_VIEN }),
         usersApi.getUsers({ page: 1, limit: 1000, vaiTro: VaiTro.HOC_SINH }),
@@ -193,6 +198,9 @@ export default function SemesterDetailPage() {
   const gvDaPhan = new Set(phanCongs.map((p) => p.maGiaoVien));
   const hsDaGhi = new Set(ghiDanhs.map((g) => g.maHocSinh));
 
+  // Học kỳ đã kết thúc → chỉ xem, không mở/gỡ môn, không phân công/ghi danh.
+  const daKetThuc = hocKy.daKetThuc;
+
   return (
     <div>
       <PageHeader
@@ -204,25 +212,33 @@ export default function SemesterDetailPage() {
         }
       />
 
+      {daKetThuc && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Học kỳ đã kết thúc — chỉ xem lại, không thể mở/gỡ môn học hay thay đổi phân công, ghi danh.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Cột trái: mở môn */}
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           <h3 className="mb-3 font-semibold text-gray-800">Môn học của học kỳ</h3>
 
-          <div className="mb-3 flex gap-2">
-            <Select
-              placeholder="-- Chọn môn để mở --"
-              value={monThem}
-              onChange={(e) => setMonThem(e.target.value)}
-              options={monChuaMo.map((m) => ({
-                value: m.maMonHoc,
-                label: m.tenMonHoc,
-              }))}
-            />
-            <Button type="button" onClick={themMon}>
-              + Mở môn
-            </Button>
-          </div>
+          {!daKetThuc && (
+            <div className="mb-3 flex gap-2">
+              <Select
+                placeholder="-- Chọn môn để mở --"
+                value={monThem}
+                onChange={(e) => setMonThem(e.target.value)}
+                options={monChuaMo.map((m) => ({
+                  value: m.maMonHoc,
+                  label: m.tenMonHoc,
+                }))}
+              />
+              <Button type="button" onClick={themMon}>
+                + Mở môn
+              </Button>
+            </div>
+          )}
 
           {offerings.length === 0 ? (
             <p className="py-4 text-center text-sm text-gray-400">
@@ -245,14 +261,16 @@ export default function SemesterDetailPage() {
                   >
                     {o.monHoc?.tenMonHoc ?? `Môn #${o.maMonHoc}`}
                   </button>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    className="!px-2 !py-1 text-red-600 hover:bg-red-50"
-                    onClick={() => xoaMon(o)}
-                  >
-                    Gỡ
-                  </Button>
+                  {!daKetThuc && (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      className="!px-2 !py-1 text-red-600 hover:bg-red-50"
+                      onClick={() => xoaMon(o)}
+                    >
+                      Gỡ
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -276,22 +294,24 @@ export default function SemesterDetailPage() {
                 <h4 className="mb-2 text-sm font-medium text-gray-700">
                   Giáo viên phụ trách ({phanCongs.length})
                 </h4>
-                <div className="mb-2 flex gap-2">
-                  <Select
-                    placeholder="-- Chọn giáo viên --"
-                    value={gvThem}
-                    onChange={(e) => setGvThem(e.target.value)}
-                    options={giaoViens
-                      .filter((g) => !gvDaPhan.has(g.maNguoiDung))
-                      .map((g) => ({
-                        value: g.maNguoiDung,
-                        label: `${g.tenNguoiDung} (${g.email})`,
-                      }))}
-                  />
-                  <Button type="button" onClick={themGv}>
-                    + Thêm
-                  </Button>
-                </div>
+                {!daKetThuc && (
+                  <div className="mb-2 flex gap-2">
+                    <Select
+                      placeholder="-- Chọn giáo viên --"
+                      value={gvThem}
+                      onChange={(e) => setGvThem(e.target.value)}
+                      options={giaoViens
+                        .filter((g) => !gvDaPhan.has(g.maNguoiDung))
+                        .map((g) => ({
+                          value: g.maNguoiDung,
+                          label: `${g.tenNguoiDung} (${g.email})`,
+                        }))}
+                    />
+                    <Button type="button" onClick={themGv}>
+                      + Thêm
+                    </Button>
+                  </div>
+                )}
                 <ul className="space-y-1">
                   {phanCongs.map((p) => (
                     <li
@@ -299,12 +319,14 @@ export default function SemesterDetailPage() {
                       className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 text-sm"
                     >
                       <span>{p.giaoVien?.tenNguoiDung ?? `#${p.maGiaoVien}`}</span>
-                      <button
-                        className="text-red-600 hover:underline"
-                        onClick={() => xoaGv(p.maPhanCong)}
-                      >
-                        Hủy
-                      </button>
+                      {!daKetThuc && (
+                        <button
+                          className="text-red-600 hover:underline"
+                          onClick={() => xoaGv(p.maPhanCong)}
+                        >
+                          Hủy
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -315,22 +337,24 @@ export default function SemesterDetailPage() {
                 <h4 className="mb-2 text-sm font-medium text-gray-700">
                   Học sinh ghi danh ({ghiDanhs.length})
                 </h4>
-                <div className="mb-2 flex gap-2">
-                  <Select
-                    placeholder="-- Chọn học sinh --"
-                    value={hsThem}
-                    onChange={(e) => setHsThem(e.target.value)}
-                    options={hocSinhs
-                      .filter((h) => !hsDaGhi.has(h.maNguoiDung))
-                      .map((h) => ({
-                        value: h.maNguoiDung,
-                        label: `${h.tenNguoiDung} (${h.email})`,
-                      }))}
-                  />
-                  <Button type="button" onClick={themHs}>
-                    + Ghi danh
-                  </Button>
-                </div>
+                {!daKetThuc && (
+                  <div className="mb-2 flex gap-2">
+                    <Select
+                      placeholder="-- Chọn học sinh --"
+                      value={hsThem}
+                      onChange={(e) => setHsThem(e.target.value)}
+                      options={hocSinhs
+                        .filter((h) => !hsDaGhi.has(h.maNguoiDung))
+                        .map((h) => ({
+                          value: h.maNguoiDung,
+                          label: `${h.tenNguoiDung} (${h.email})`,
+                        }))}
+                    />
+                    <Button type="button" onClick={themHs}>
+                      + Ghi danh
+                    </Button>
+                  </div>
+                )}
                 <ul className="max-h-60 space-y-1 overflow-y-auto">
                   {ghiDanhs.map((g) => (
                     <li
@@ -338,12 +362,14 @@ export default function SemesterDetailPage() {
                       className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 text-sm"
                     >
                       <span>{g.hocSinh?.tenNguoiDung ?? `#${g.maHocSinh}`}</span>
-                      <button
-                        className="text-red-600 hover:underline"
-                        onClick={() => xoaHs(g.maGhiDanh)}
-                      >
-                        Hủy
-                      </button>
+                      {!daKetThuc && (
+                        <button
+                          className="text-red-600 hover:underline"
+                          onClick={() => xoaHs(g.maGhiDanh)}
+                        >
+                          Hủy
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>

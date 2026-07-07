@@ -32,17 +32,27 @@ export default function SemesterFormModal({ moRa, hocKy, onDong, onLuuXong }: Pr
     }
   }, [moRa, hocKy]);
 
+  const homNay = new Date().toISOString().slice(0, 10);
+
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
     if (!tenHocKy.trim() || !namHoc.trim())
       return toast.error('Vui lòng nhập tên học kỳ và năm học');
+    if (!ngayBatDau || !ngayKetThuc)
+      return toast.error('Vui lòng nhập ngày bắt đầu và ngày kết thúc');
+    if (ngayKetThuc <= ngayBatDau)
+      return toast.error('Ngày kết thúc phải sau ngày bắt đầu');
+    // Chặn ngày bắt đầu quá khứ khi tạo mới hoặc khi đổi ngày bắt đầu.
+    const batDauDaDoi = !laSua || ngayBatDau !== (hocKy?.ngayBatDau?.slice(0, 10) ?? '');
+    if (batDauDaDoi && ngayBatDau < homNay)
+      return toast.error('Ngày bắt đầu không được ở quá khứ');
     setDangLuu(true);
     try {
       const payload = {
         tenHocKy: tenHocKy.trim(),
         namHoc: namHoc.trim(),
-        ngayBatDau: ngayBatDau || undefined,
-        ngayKetThuc: ngayKetThuc || undefined,
+        ngayBatDau,
+        ngayKetThuc,
       };
       if (laSua) {
         await semestersApi.updateSemester(hocKy!.maHocKy, payload);
@@ -95,14 +105,18 @@ export default function SemesterFormModal({ moRa, hocKy, onDong, onLuuXong }: Pr
         />
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Ngày bắt đầu"
+            label="Ngày bắt đầu *"
             type="date"
+            required
+            min={laSua ? undefined : homNay}
             value={ngayBatDau}
             onChange={(e) => setNgayBatDau(e.target.value)}
           />
           <Input
-            label="Ngày kết thúc"
+            label="Ngày kết thúc *"
             type="date"
+            required
+            min={ngayBatDau || undefined}
             value={ngayKetThuc}
             onChange={(e) => setNgayKetThuc(e.target.value)}
           />

@@ -5,18 +5,18 @@ import type { PaginatedData, PaginationParams } from '@/types/api-response.type'
 export interface CreateSemesterPayload {
   tenHocKy: string;
   namHoc: string;
-  ngayBatDau?: string;
-  ngayKetThuc?: string;
+  ngayBatDau: string;
+  ngayKetThuc: string;
 }
 
 export type UpdateSemesterPayload = Partial<CreateSemesterPayload>;
 
 export interface QuerySemesterParams extends PaginationParams {
   search?: string;
-  laHoatDong?: boolean;
 }
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
+// Học kỳ luôn tồn tại để xem lại lịch sử - không có API xóa.
 export const semestersApi = {
   getSemesters: (params: QuerySemesterParams) =>
     axiosClient.get('/semesters', { params }) as unknown as Promise<
@@ -31,12 +31,4 @@ export const semestersApi = {
 
   updateSemester: (id: number, payload: UpdateSemesterPayload) =>
     axiosClient.patch(`/semesters/${id}`, payload) as unknown as Promise<HocKy>,
-
-  updateSemesterStatus: (id: number, laHoatDong: boolean) =>
-    axiosClient.patch(`/semesters/${id}/status`, {
-      laHoatDong,
-    }) as unknown as Promise<HocKy>,
-
-  deleteSemester: (id: number) =>
-    axiosClient.delete(`/semesters/${id}`) as unknown as Promise<null>,
 };
