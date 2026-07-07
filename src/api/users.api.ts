@@ -40,5 +40,5 @@ export const usersApi = {
     axiosClient.patch(`/users/${id}/status`, { laHoatDong }) as unknown as Promise<NguoiDung>,
 
   deleteUser: (id: number) =>
-    axiosClient.delete(`/users/${id}`) as unknown as Promise<null>,
+    axiosClient.delete(`/users/${id}`) as unknown as Promise<{ daXoaCung: boolean }>,
 };

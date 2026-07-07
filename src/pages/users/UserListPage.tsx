@@ -69,8 +69,12 @@ export default function UserListPage() {
     if (!chonXoa) return;
     setDangXoa(true);
     try {
-      await usersApi.deleteUser(chonXoa.maNguoiDung);
-      toast.success('Đã xóa (khóa) người dùng');
+      const ketQua = await usersApi.deleteUser(chonXoa.maNguoiDung);
+      toast.success(
+        ketQua.daXoaCung
+          ? 'Đã xóa tài khoản thành công'
+          : 'Tài khoản còn dữ liệu liên quan nên đã bị khóa (vô hiệu hóa)',
+      );
       setChonXoa(null);
       taiDuLieu();
     } catch (err) {
@@ -209,7 +213,7 @@ export default function UserListPage() {
       <ConfirmDialog
         moRa={!!chonXoa}
         tieuDe="Xóa người dùng"
-        noiDung={`Xóa (khóa) tài khoản "${chonXoa?.tenNguoiDung}"? Tài khoản sẽ bị vô hiệu hóa.`}
+        noiDung={`Xóa tài khoản "${chonXoa?.tenNguoiDung}"? Nếu chưa có dữ liệu liên quan, tài khoản sẽ bị xóa hoàn toàn khỏi hệ thống; nếu còn dữ liệu, tài khoản chỉ bị khóa (vô hiệu hóa).`}
         nhanXacNhan="Xóa"
         nguyHiem
         dangXuLy={dangXoa}
