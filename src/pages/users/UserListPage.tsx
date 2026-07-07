@@ -187,7 +187,9 @@ export default function UserListPage() {
           placeholder="-- Tất cả vai trò --"
           value={locVaiTro}
           onChange={(e) => setLocVaiTro(e.target.value)}
-          options={Object.values(VaiTro).map((v) => ({ value: v, label: NHAN_VAI_TRO[v] }))}
+          options={Object.values(VaiTro)
+            .filter((v) => v !== VaiTro.QUAN_TRI_VIEN)
+            .map((v) => ({ value: v, label: NHAN_VAI_TRO[v] }))}
         />
         <Select
           placeholder="-- Tất cả trạng thái --"
