@@ -1,5 +1,6 @@
 import type { DoKho } from '@/enums/doKho';
 import type { LoaiCauHoi } from '@/enums/loaiCauHoi';
+import type { NguoiDung } from '@/types/nguoi-dung.type';
 
 // Khớp entity LUA_CHON. Lưu ý: GET /questions/:id KHÔNG trả cờ đáp án đúng
 // (bảng DAP_AN không được join), nên `laDapAnDung` có thể không có khi đọc về.
@@ -20,6 +21,8 @@ export interface CauHoi {
   doKho: DoKho;
   loaiCauHoi: LoaiCauHoi;
   luaChons: LuaChon[];
+  // BE join để hiển thị giáo viên tạo câu hỏi (trang Admin).
+  nguoiTao?: NguoiDung;
 }
 
 // Câu hỏi nháp do AI trích xuất từ file (chưa lưu DB, chưa gắn môn học).

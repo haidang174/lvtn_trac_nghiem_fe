@@ -57,14 +57,20 @@ export const moduleRoutes: RouteObject[] = [
     ],
   },
 
-  // ----- Module Câu hỏi (GV + Admin) -----
+  // ----- Module Câu hỏi: xem (GV + Admin, Admin chỉ đọc) -----
   {
     element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
     children: [
       { path: '/questions', element: <QuestionListPage /> },
+      { path: '/questions/:id', element: <QuestionDetailPage /> },
+    ],
+  },
+  // ----- Module Câu hỏi: tạo/sửa/import (chỉ GV) -----
+  {
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.GIAO_VIEN]} />,
+    children: [
       { path: '/questions/new', element: <QuestionFormPage /> },
       { path: '/questions/import', element: <QuestionImportPage /> },
-      { path: '/questions/:id', element: <QuestionDetailPage /> },
       { path: '/questions/:id/edit', element: <QuestionFormPage /> },
     ],
   },
