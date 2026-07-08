@@ -22,7 +22,15 @@ export interface PhongThiBaiThi {
   baiThi?: BaiThi;
 }
 
-// Khớp entity PHONG_THI — Admin quản lý, chứa nhiều đề, vào theo ghi danh.
+// Khớp entity PHONG_THI_HOC_SINH (bảng nối phòng - học sinh được gán).
+export interface PhongThiHocSinh {
+  maPhongThiHocSinh: number;
+  maPhongThi: number;
+  maHocSinh: number;
+  hocSinh?: NguoiDung;
+}
+
+// Khớp entity PHONG_THI — Admin quản lý, chứa nhiều đề, HS vào theo phân công.
 export interface PhongThi {
   maPhongThi: number;
   maMonHocHocKy: number;
@@ -32,10 +40,10 @@ export interface PhongThi {
   thoiGianLamBai: number;
   moLuc: string;
   dongLuc: string;
-  soNguoiThamGia?: number | null;
   laHoatDong: boolean;
   trangThai: TrangThaiPhongThi;
   monHocHocKy?: MonHocHocKy;
   phongThiBaiThis?: PhongThiBaiThi[];
+  phongThiHocSinhs?: PhongThiHocSinh[];
   thanhViens?: ThanhVienPhong[];
 }

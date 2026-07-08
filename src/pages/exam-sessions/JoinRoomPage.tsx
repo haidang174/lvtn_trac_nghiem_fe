@@ -53,7 +53,7 @@ export default function JoinRoomPage() {
     <div>
       <PageHeader
         tieuDe="Danh sách phòng thi"
-        moTa="Các phòng thi thuộc môn học bạn đã được ghi danh"
+        moTa="Các phòng thi bạn được phân công vào"
         hanhDong={
           <Button variant="ghost" type="button" onClick={taiDuLieu}>
             🔄 Làm mới
@@ -67,7 +67,7 @@ export default function JoinRoomPage() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500">
-          Chưa có phòng thi nào. Hãy liên hệ giáo viên/quản trị nếu bạn cần được ghi danh.
+          Chưa có phòng thi nào. Hãy liên hệ giáo viên/quản trị nếu bạn cần được phân công vào phòng.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

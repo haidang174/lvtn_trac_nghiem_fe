@@ -8,10 +8,10 @@ export interface CreateExamRoomPayload {
   maMonHocHocKy: number;
   tenPhongThi: string;
   maBaiThis: number[];
+  maHocSinhs: number[]; // HS được gán vào phòng (bắt buộc).
   cheDoCauHoi: CheDoCauHoi;
   thoiGianLamBai: number;
   moLuc: string; // ISO datetime; giờ đóng phòng = moLuc + thoiGianLamBai.
-  soNguoiThamGia?: number;
 }
 
 export type UpdateExamRoomPayload = Partial<CreateExamRoomPayload>;
@@ -30,12 +30,18 @@ export const examRoomsApi = {
       PaginatedData<PhongThi>
     >,
 
-  // Học sinh: phòng thuộc môn-học-kỳ đã ghi danh.
+  // Học sinh: phòng mình được Admin gán vào.
   getAvailableRooms: () =>
     axiosClient.get('/exam-rooms/available') as unknown as Promise<{
       items: PhongThi[];
       total: number;
     }>,
+
+  // Admin: maHocSinh đã gán vào phòng khác của môn-học-kỳ (ẩn khỏi picker).
+  getAssignedStudents: (maMonHocHocKy: number, excludePhongThi?: number) =>
+    axiosClient.get('/exam-rooms/assigned-students', {
+      params: { maMonHocHocKy, excludePhongThi },
+    }) as unknown as Promise<number[]>,
 
   getExamRoomById: (id: number) =>
     axiosClient.get(`/exam-rooms/${id}`) as unknown as Promise<PhongThi>,
