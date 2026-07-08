@@ -25,7 +25,7 @@ const CHUYEN_TRANG_THAI: Record<TrangThaiPhongThi, TrangThaiPhongThi[]> = {
 const mauThanhVien: Record<TrangThaiThanhVien, MauBadge> = {
   da_tham_gia: 'blue',
   da_nop_bai: 'green',
-  bi_loai: 'red',
+  vang_mat: 'gray',
 };
 
 export default function ExamRoomDetailPage() {
@@ -94,7 +94,10 @@ export default function ExamRoomDetailPage() {
 
   const buocTiep = CHUYEN_TRANG_THAI[phong.trangThai];
   const dsDe = phong.phongThiBaiThis ?? [];
-  const dsHs = phong.phongThiHocSinhs ?? [];
+  const soCoMat = thanhViens.filter(
+    (t) => t.trangThai !== TrangThaiThanhVien.VANG_MAT,
+  ).length;
+  const soVang = thanhViens.length - soCoMat;
   const tenMonKy = phong.monHocHocKy
     ? `${phong.monHocHocKy.monHoc?.tenMonHoc ?? ''} — ${phong.monHocHocKy.hocKy?.tenHocKy ?? ''} ${phong.monHocHocKy.hocKy?.namHoc ?? ''}`
     : '—';
@@ -105,7 +108,7 @@ export default function ExamRoomDetailPage() {
       tieuDe: 'Học sinh',
       render: (t) => (
         <span className="font-medium text-gray-800">
-          {t.nguoiDung?.tenNguoiDung ?? `#${t.maNguoiDung}`}
+          {t.nguoiDung?.tenNguoiDung ?? `#${t.maHocSinh}`}
         </span>
       ),
     },
@@ -170,30 +173,6 @@ export default function ExamRoomDetailPage() {
           )}
         </div>
 
-        {/* Học sinh được gán vào phòng */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <h3 className="mb-2 font-medium text-gray-800">
-            Học sinh trong phòng ({dsHs.length})
-          </h3>
-          <p className="mb-2 text-xs text-gray-500">
-            Chỉ những học sinh này thấy và vào được phòng.
-          </p>
-          {dsHs.length === 0 ? (
-            <p className="text-sm text-gray-400">Chưa gán học sinh nào.</p>
-          ) : (
-            <ul className="max-h-64 space-y-1.5 overflow-y-auto">
-              {dsHs.map((h) => (
-                <li
-                  key={h.maPhongThiHocSinh}
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700"
-                >
-                  {h.hocSinh?.tenNguoiDung ?? `#${h.maHocSinh}`}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
         {/* Thông tin phòng */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
@@ -235,7 +214,13 @@ export default function ExamRoomDetailPage() {
       </div>
 
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold text-gray-800">Thành viên ({thanhViens.length})</h2>
+        <div className="flex items-baseline gap-3">
+          <h2 className="font-semibold text-gray-800">Thành viên ({thanhViens.length})</h2>
+          <span className="text-sm text-gray-500">
+            Có mặt <span className="font-medium text-green-600">{soCoMat}</span> · Vắng{' '}
+            <span className="font-medium text-gray-600">{soVang}</span>
+          </span>
+        </div>
         <Button variant="ghost" type="button" className="!px-2 !py-1" onClick={taiDuLieu}>
           🔄 Làm mới
         </Button>
@@ -243,8 +228,8 @@ export default function ExamRoomDetailPage() {
       <Table
         columns={cotThanhVien}
         data={thanhViens}
-        rowKey={(t) => t.maThanhVien}
-        rong="Chưa có thí sinh nào tham gia"
+        rowKey={(t) => t.maHocSinh}
+        rong="Chưa gán học sinh nào vào phòng"
       />
     </div>
   );
