@@ -94,6 +94,7 @@ export default function ExamRoomDetailPage() {
 
   const buocTiep = CHUYEN_TRANG_THAI[phong.trangThai];
   const dsDe = phong.phongThiBaiThis ?? [];
+  const dsHs = phong.phongThiHocSinhs ?? [];
   const tenMonKy = phong.monHocHocKy
     ? `${phong.monHocHocKy.monHoc?.tenMonHoc ?? ''} — ${phong.monHocHocKy.hocKy?.tenHocKy ?? ''} ${phong.monHocHocKy.hocKy?.namHoc ?? ''}`
     : '—';
@@ -169,6 +170,30 @@ export default function ExamRoomDetailPage() {
           )}
         </div>
 
+        {/* Học sinh được gán vào phòng */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <h3 className="mb-2 font-medium text-gray-800">
+            Học sinh trong phòng ({dsHs.length})
+          </h3>
+          <p className="mb-2 text-xs text-gray-500">
+            Chỉ những học sinh này thấy và vào được phòng.
+          </p>
+          {dsHs.length === 0 ? (
+            <p className="text-sm text-gray-400">Chưa gán học sinh nào.</p>
+          ) : (
+            <ul className="max-h-64 space-y-1.5 overflow-y-auto">
+              {dsHs.map((h) => (
+                <li
+                  key={h.maPhongThiHocSinh}
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700"
+                >
+                  {h.hocSinh?.tenNguoiDung ?? `#${h.maHocSinh}`}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Thông tin phòng */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
@@ -180,9 +205,6 @@ export default function ExamRoomDetailPage() {
             <Info nhan="Thời lượng" giaTri={`${phong.thoiGianLamBai} phút`} />
             <Info nhan="Mở lúc" giaTri={formatDateTime(phong.moLuc)} />
             <Info nhan="Đóng lúc" giaTri={formatDateTime(phong.dongLuc)} />
-            {phong.soNguoiThamGia != null && (
-              <Info nhan="Số người tối đa" giaTri={String(phong.soNguoiThamGia)} />
-            )}
             <div>
               <dt className="text-gray-500">Trạng thái</dt>
               <dd className="mt-1">

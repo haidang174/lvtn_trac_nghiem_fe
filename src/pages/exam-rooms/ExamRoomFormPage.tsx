@@ -8,6 +8,7 @@ import Spinner from '@/components/ui/Spinner';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { examsApi } from '@/api/exams.api';
 import { subjectOfferingsApi } from '@/api/subjectOfferings.api';
+import { enrollmentsApi } from '@/api/enrollments.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
 import { localToISO, nowLocalInput, formatDateTime } from '@/utils/formatDate';
@@ -15,6 +16,7 @@ import { CheDoCauHoi, NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
 import { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { BaiThi } from '@/types/bai-thi.type';
 import type { MonHocHocKy } from '@/types/mon-hoc-hoc-ky.type';
+import type { GhiDanh } from '@/types/ghi-danh.type';
 
 export default function ExamRoomFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,14 +26,16 @@ export default function ExamRoomFormPage() {
 
   const [offerings, setOfferings] = useState<MonHocHocKy[]>([]);
   const [deCongKhai, setDeCongKhai] = useState<BaiThi[]>([]);
+  const [dsGhiDanh, setDsGhiDanh] = useState<GhiDanh[]>([]);
+  const [daGanKhac, setDaGanKhac] = useState<number[]>([]);
 
   const [maMonHocHocKy, setMaMonHocHocKy] = useState('');
   const [tenPhongThi, setTenPhongThi] = useState('');
   const [maBaiThis, setMaBaiThis] = useState<number[]>([]);
+  const [maHocSinhs, setMaHocSinhs] = useState<number[]>([]);
   const [cheDo, setCheDo] = useState<CheDoCauHoi>(CheDoCauHoi.THEO_THU_TU);
   const [thoiGianLamBai, setThoiGianLamBai] = useState(30);
   const [moLuc, setMoLuc] = useState('');
-  const [soNguoiThamGia, setSoNguoiThamGia] = useState<number | ''>('');
 
   const [dangTai, setDangTai] = useState(true);
   const [dangLuu, setDangLuu] = useState(false);
@@ -52,9 +56,11 @@ export default function ExamRoomFormPage() {
         setTenPhongThi(phong.tenPhongThi);
         setCheDo(phong.cheDoCauHoi);
         setThoiGianLamBai(phong.thoiGianLamBai);
-        setSoNguoiThamGia(phong.soNguoiThamGia ?? '');
         setMaBaiThis(
           (phong.phongThiBaiThis ?? []).map((p) => p.maBaiThi),
+        );
+        setMaHocSinhs(
+          (phong.phongThiHocSinhs ?? []).map((p) => p.maHocSinh),
         );
       }
     } catch (err) {
@@ -92,6 +98,33 @@ export default function ExamRoomFormPage() {
     };
   }, [maMonHocHocKy, toast]);
 
+  // Nạp danh sách HS đã ghi danh môn-học-kỳ + HS đã gán vào phòng khác (để ẩn).
+  useEffect(() => {
+    if (!maMonHocHocKy) {
+      setDsGhiDanh([]);
+      setDaGanKhac([]);
+      return;
+    }
+    let huy = false;
+    Promise.all([
+      enrollmentsApi.getEnrollments({ maMonHocHocKy: Number(maMonHocHocKy) }),
+      examRoomsApi.getAssignedStudents(
+        Number(maMonHocHocKy),
+        laSua && id ? Number(id) : undefined,
+      ),
+    ])
+      .then(([ds, daGan]) => {
+        if (!huy) {
+          setDsGhiDanh(ds);
+          setDaGanKhac(daGan);
+        }
+      })
+      .catch((err) => !huy && toast.error(chuanHoaLoi(err).message));
+    return () => {
+      huy = true;
+    };
+  }, [maMonHocHocKy, id, laSua, toast]);
+
   const dongLucTuTinh =
     moLuc && thoiGianLamBai
       ? new Date(new Date(moLuc).getTime() + thoiGianLamBai * 60000)
@@ -104,6 +137,19 @@ export default function ExamRoomFormPage() {
         : [...prev, maBaiThi],
     );
   };
+
+  const toggleHocSinh = (maHocSinh: number) => {
+    setMaHocSinhs((prev) =>
+      prev.includes(maHocSinh)
+        ? prev.filter((x) => x !== maHocSinh)
+        : [...prev, maHocSinh],
+    );
+  };
+
+  // HS đã gán vào phòng khác thì ẩn khỏi danh sách chọn.
+  const dsKhaDung = dsGhiDanh.filter((g) => !daGanKhac.includes(g.maHocSinh));
+  const chonTatCaHs = () => setMaHocSinhs(dsKhaDung.map((g) => g.maHocSinh));
+  const boChonHs = () => setMaHocSinhs([]);
 
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
@@ -118,6 +164,8 @@ export default function ExamRoomFormPage() {
       return toast.error(
         `Thời lượng phòng (${thoiGianLamBai} phút) không được nhỏ hơn thời lượng đề dài nhất (${maxDe} phút)`,
       );
+    if (maHocSinhs.length === 0)
+      return toast.error('Vui lòng gán ít nhất 1 học sinh vào phòng');
     if (!moLuc) return toast.error('Vui lòng nhập thời gian mở phòng');
     if (new Date(moLuc) < new Date())
       return toast.error('Thời gian mở phòng không được ở quá khứ');
@@ -128,10 +176,10 @@ export default function ExamRoomFormPage() {
         maMonHocHocKy: Number(maMonHocHocKy),
         tenPhongThi: tenPhongThi.trim(),
         maBaiThis,
+        maHocSinhs,
         cheDoCauHoi: cheDo,
         thoiGianLamBai,
         moLuc: localToISO(moLuc),
-        soNguoiThamGia: soNguoiThamGia ? Number(soNguoiThamGia) : undefined,
       };
       if (laSua) {
         await examRoomsApi.updateExamRoom(+id!, payload);
@@ -180,6 +228,7 @@ export default function ExamRoomFormPage() {
           onChange={(e) => {
             setMaMonHocHocKy(e.target.value);
             setMaBaiThis([]);
+            setMaHocSinhs([]);
           }}
           options={offerings.map((o) => ({
             value: o.maMonHocHocKy,
@@ -230,6 +279,63 @@ export default function ExamRoomFormPage() {
           )}
         </div>
 
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium text-gray-700">
+              Học sinh trong phòng * (đã chọn {maHocSinhs.length}/{dsKhaDung.length})
+            </label>
+            {maMonHocHocKy && dsKhaDung.length > 0 && (
+              <div className="flex gap-2 text-xs">
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={chonTatCaHs}
+                >
+                  Chọn tất cả
+                </button>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:underline"
+                  onClick={boChonHs}
+                >
+                  Bỏ chọn
+                </button>
+              </div>
+            )}
+          </div>
+          {!maMonHocHocKy ? (
+            <p className="py-4 text-center text-sm text-gray-400">
+              Hãy chọn môn học của học kỳ để xem danh sách học sinh đã ghi danh
+            </p>
+          ) : dsKhaDung.length === 0 ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              {dsGhiDanh.length === 0
+                ? 'Chưa có học sinh nào được ghi danh vào môn học của học kỳ này.'
+                : 'Tất cả học sinh đã ghi danh đều đã được gán vào phòng khác.'}
+            </p>
+          ) : (
+            <ul className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-2">
+              {dsKhaDung.map((g) => (
+                <li key={g.maGhiDanh}>
+                  <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={maHocSinhs.includes(g.maHocSinh)}
+                      onChange={() => toggleHocSinh(g.maHocSinh)}
+                    />
+                    <span className="text-sm text-gray-700">
+                      {g.hocSinh?.tenNguoiDung ?? `#${g.maHocSinh}`}{' '}
+                      <span className="text-xs text-gray-400">
+                        ({g.hocSinh?.email ?? ''})
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Select
             label="Chế độ câu hỏi"
@@ -266,17 +372,6 @@ export default function ExamRoomFormPage() {
             </div>
           </div>
         </div>
-
-        <Input
-          label="Số người tham gia tối đa (tùy chọn)"
-          type="number"
-          min={1}
-          value={soNguoiThamGia}
-          onChange={(e) =>
-            setSoNguoiThamGia(e.target.value ? Number(e.target.value) : '')
-          }
-          placeholder="Bỏ trống = không giới hạn"
-        />
 
         <div className="flex justify-end gap-3">
           <Button variant="secondary" type="button" onClick={() => navigate('/exam-rooms')}>
