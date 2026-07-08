@@ -127,6 +127,14 @@ export default function ExamListPage() {
           <StatusBadge mau="gray">{NHAN_TRANG_THAI_BAI_THI.nhap}</StatusBadge>
         ),
     },
+    ...(!laGiaoVien
+      ? [
+          {
+            tieuDe: 'Người tạo',
+            render: (bt: BaiThi) => bt.nguoiTao?.tenNguoiDung ?? `#${bt.taoBoi}`,
+          } as ColumnDef<BaiThi>,
+        ]
+      : []),
     {
       tieuDe: '',
       className: 'text-right whitespace-nowrap',

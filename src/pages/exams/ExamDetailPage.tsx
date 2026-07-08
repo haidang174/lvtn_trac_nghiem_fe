@@ -99,6 +99,12 @@ export default function ExamDetailPage() {
           <span className="text-gray-500">Số câu: </span>
           <span className="font-medium">{cauHois.length}</span>
         </div>
+        {!laGiaoVien && (
+          <div>
+            <span className="text-gray-500">Người tạo: </span>
+            <span className="font-medium">{bt.nguoiTao?.tenNguoiDung ?? `#${bt.taoBoi}`}</span>
+          </div>
+        )}
         <div>
           <span className="text-gray-500">Trạng thái: </span>
           {bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? (
