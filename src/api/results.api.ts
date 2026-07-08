@@ -6,6 +6,7 @@ import type {
   KetQuaChiTiet,
   ThongKeKetQua,
   ThongKePhong,
+  BangDiemPhongItem,
 } from '@/types/ket-qua.type';
 
 export interface QueryResultParams extends PaginationParams {
@@ -62,6 +63,12 @@ export const resultsApi = {
     axiosClient.get('/results/rooms', { params }) as unknown as Promise<
       PaginatedData<ThongKePhong>
     >,
+
+  // GV/Admin: bảng điểm 1 phòng — mọi HS được gán (kể cả chưa thi).
+  getRoomScores: (maPhongThi: number, params: PaginationParams) =>
+    axiosClient.get(`/results/rooms/${maPhongThi}/scores`, {
+      params,
+    }) as unknown as Promise<PaginatedData<BangDiemPhongItem>>,
 
   // Chi tiết 1 kết quả (HS xem của mình, GV xem đề của mình, Admin xem tất cả).
   getResultById: (id: number) =>

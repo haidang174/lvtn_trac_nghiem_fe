@@ -5,11 +5,11 @@ import type { NguoiDung } from './nguoi-dung.type';
 import type { BaiThi } from './bai-thi.type';
 import type { MonHocHocKy } from './mon-hoc-hoc-ky.type';
 
-// Khớp entity THANH_VIEN_PHONG.
+// Thành viên phòng (view): mỗi HS được gán vào phòng kèm trạng thái tham gia.
+// maThanhVien = null khi HS chưa vào thi (VANG_MAT - chưa có bản ghi THANH_VIEN_PHONG).
 export interface ThanhVienPhong {
-  maThanhVien: number;
-  maPhongThi: number;
-  maNguoiDung: number;
+  maHocSinh: number;
+  maThanhVien: number | null;
   trangThai: TrangThaiThanhVien;
   nguoiDung?: NguoiDung;
 }

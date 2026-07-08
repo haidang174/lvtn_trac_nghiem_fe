@@ -36,6 +36,20 @@ export interface KetQuaItem {
   thoiGianNop: string;
 }
 
+// Một dòng bảng điểm phòng: mọi HS được gán vào phòng, kèm điểm nếu đã thi.
+export interface BangDiemPhongItem {
+  maNguoiDung: number;
+  tenNguoiDung: string | null;
+  email: string | null;
+  daThi: boolean;
+  maKetQua: number | null;
+  tieuDe: string | null; // tên đề đã bốc
+  diemSo: number | string | null;
+  soCauDung: number | null;
+  tongSoCau: number | null;
+  thoiGianNop: string | null;
+}
+
 // Lựa chọn trong chi tiết kết quả (kèm đáp án đúng + đã chọn).
 export interface LuaChonKetQua {
   maLuaChon: number;
@@ -76,8 +90,10 @@ export interface ThongKeKetQua {
 // Thống kê gom nhóm theo phòng thi (một dòng = một phòng).
 export interface ThongKePhong {
   maPhongThi: number;
-  maThamGiaPhong: string;
-  tieuDe: string; // tên đề thi
+  tenPhongThi: string;
+  tenMonHoc: string | null;
+  tenHocKy: string | null;
+  namHoc: string | null;
   soLuotNop: number; // tử số: số lượt đã nộp
   tongThanhVien: number; // mẫu số: số em đã vào phòng
   diemTrungBinh: number;

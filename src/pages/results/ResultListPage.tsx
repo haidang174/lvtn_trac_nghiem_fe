@@ -7,32 +7,32 @@ import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { resultsApi, type QueryRoomStatsParams } from '@/api/results.api';
-import { examsApi } from '@/api/exams.api';
+import { subjectsApi } from '@/api/subjects.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatScore } from '@/utils/formatScore';
 import type { ThongKePhong } from '@/types/ket-qua.type';
-import type { BaiThi } from '@/types/bai-thi.type';
+import type { MonHoc } from '@/types/mon-hoc.type';
 
 export default function ResultListPage() {
   const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [deThis, setDeThis] = useState<BaiThi[]>([]);
-  const [locDe, setLocDe] = useState('');
+  const [monHocs, setMonHocs] = useState<MonHoc[]>([]);
+  const [locMon, setLocMon] = useState('');
   const [timKiem, setTimKiem] = useState('');
 
   const [items, setItems] = useState<ThongKePhong[]>([]);
   const [total, setTotal] = useState(0);
   const [dangTai, setDangTai] = useState(false);
 
-  // Nạp đề thi cho bộ lọc.
+  // Nạp môn học cho bộ lọc.
   useEffect(() => {
-    examsApi
-      .getExams({ page: 1, limit: 1000 })
-      .then((e) => setDeThis(e.items))
+    subjectsApi
+      .getSubjects({ page: 1, limit: 1000 })
+      .then((e) => setMonHocs(e.items))
       .catch(() => undefined);
   }, []);
 
@@ -40,7 +40,7 @@ export default function ResultListPage() {
     setDangTai(true);
     try {
       const params: QueryRoomStatsParams = { page, limit };
-      if (locDe) params.maBaiThi = Number(locDe);
+      if (locMon) params.maMonHoc = Number(locMon);
       if (timKiem.trim()) params.search = timKiem.trim();
       const ds = await resultsApi.getRoomStats(params);
       setItems(ds.items);
@@ -50,7 +50,7 @@ export default function ResultListPage() {
     } finally {
       setDangTai(false);
     }
-  }, [page, limit, locDe, timKiem, toast]);
+  }, [page, limit, locMon, timKiem, toast]);
 
   useEffect(() => {
     taiDuLieu();
@@ -58,14 +58,27 @@ export default function ResultListPage() {
 
   useEffect(() => {
     resetPage();
-  }, [locDe, timKiem, resetPage]);
+  }, [locMon, timKiem, resetPage]);
 
   const columns: ColumnDef<ThongKePhong>[] = [
     {
-      tieuDe: 'Mã phòng',
-      render: (r) => <span className="font-mono font-semibold text-gray-900">{r.maThamGiaPhong}</span>,
+      tieuDe: 'Tên phòng',
+      render: (r) => <span className="font-semibold text-gray-900">{r.tenPhongThi}</span>,
     },
-    { tieuDe: 'Đề thi', render: (r) => <span className="font-medium text-gray-900">{r.tieuDe}</span> },
+    {
+      tieuDe: 'Môn học',
+      render: (r) => (
+        <div>
+          <span className="font-medium text-gray-900">{r.tenMonHoc ?? '—'}</span>
+          {r.tenHocKy && (
+            <div className="text-xs text-gray-500">
+              {r.tenHocKy}
+              {r.namHoc ? ` · ${r.namHoc}` : ''}
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       tieuDe: 'Số lượt thi',
       className: 'text-center',
@@ -115,13 +128,13 @@ export default function ResultListPage() {
       {/* Bộ lọc */}
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Select
-          placeholder="-- Tất cả đề thi --"
-          value={locDe}
-          onChange={(e) => setLocDe(e.target.value)}
-          options={deThis.map((d) => ({ value: d.maBaiThi, label: d.tieuDe }))}
+          placeholder="-- Tất cả môn học --"
+          value={locMon}
+          onChange={(e) => setLocMon(e.target.value)}
+          options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
         />
         <Input
-          placeholder="Tìm theo mã phòng hoặc tên đề..."
+          placeholder="Tìm theo tên phòng..."
           value={timKiem}
           onChange={(e) => setTimKiem(e.target.value)}
         />
