@@ -76,8 +76,10 @@ export interface ThongKeKetQua {
 // Thống kê gom nhóm theo phòng thi (một dòng = một phòng).
 export interface ThongKePhong {
   maPhongThi: number;
-  maThamGiaPhong: string;
-  tieuDe: string; // tên đề thi
+  tenPhongThi: string;
+  tenMonHoc: string | null;
+  tenHocKy: string | null;
+  namHoc: string | null;
   soLuotNop: number; // tử số: số lượt đã nộp
   tongThanhVien: number; // mẫu số: số em đã vào phòng
   diemTrungBinh: number;
