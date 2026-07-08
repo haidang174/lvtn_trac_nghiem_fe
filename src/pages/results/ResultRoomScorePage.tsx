@@ -11,7 +11,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
-import type { KetQuaItem, ThongKeKetQua } from '@/types/ket-qua.type';
+import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 
 export default function ResultRoomScorePage() {
@@ -22,7 +22,7 @@ export default function ResultRoomScorePage() {
   const toast = useToast();
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
-  const [items, setItems] = useState<KetQuaItem[]>([]);
+  const [items, setItems] = useState<BangDiemPhongItem[]>([]);
   const [total, setTotal] = useState(0);
   const [thongKe, setThongKe] = useState<ThongKeKetQua | null>(null);
   const [dangTai, setDangTai] = useState(false);
@@ -41,7 +41,7 @@ export default function ResultRoomScorePage() {
     setDangTai(true);
     try {
       const [ds, tk] = await Promise.all([
-        resultsApi.getResults({ page, limit, maPhongThi: maPhong }),
+        resultsApi.getRoomScores(maPhong, { page, limit }),
         resultsApi.getResultStats({ maPhongThi: maPhong }),
       ]);
       setItems(ds.items);
@@ -58,7 +58,7 @@ export default function ResultRoomScorePage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
-  const columns: ColumnDef<KetQuaItem>[] = [
+  const columns: ColumnDef<BangDiemPhongItem>[] = [
     {
       tieuDe: 'Học sinh',
       render: (r) => (
@@ -68,37 +68,59 @@ export default function ResultRoomScorePage() {
         </div>
       ),
     },
-    { tieuDe: 'Đề thi', render: (r) => <span className="font-medium text-gray-900">{r.tieuDe}</span> },
+    {
+      tieuDe: 'Đề thi',
+      render: (r) => <span className="font-medium text-gray-900">{r.tieuDe ?? '—'}</span>,
+    },
     {
       tieuDe: 'Điểm',
       className: 'text-center',
-      render: (r) => <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>,
+      render: (r) =>
+        r.daThi ? (
+          <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
+        ) : (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+            Chưa thi
+          </span>
+        ),
     },
     {
       tieuDe: 'Đúng/Tổng',
       className: 'text-center',
-      render: (r) => `${r.soCauDung}/${r.tongSoCau}`,
+      render: (r) => (r.daThi ? `${r.soCauDung}/${r.tongSoCau}` : '—'),
     },
-    { tieuDe: 'Nộp lúc', render: (r) => formatDateTime(r.thoiGianNop) },
+    {
+      tieuDe: 'Nộp lúc',
+      render: (r) => (r.daThi && r.thoiGianNop ? formatDateTime(r.thoiGianNop) : '—'),
+    },
     {
       tieuDe: '',
       className: 'text-right',
-      render: (r) => (
-        <Button
-          variant="ghost"
-          type="button"
-          className="!px-2 !py-1"
-          onClick={() => navigate(`/results/${r.maKetQua}`)}
-        >
-          Chi tiết
-        </Button>
-      ),
+      render: (r) =>
+        r.daThi && r.maKetQua != null ? (
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => navigate(`/results/${r.maKetQua}`)}
+          >
+            Chi tiết
+          </Button>
+        ) : null,
     },
   ];
 
   const tieuDe = phong
     ? `Bảng điểm phòng ${phong.tenPhongThi}`
     : 'Bảng điểm phòng thi';
+
+  // Mô tả: Môn học · Học kỳ · Năm học (cho biết môn của học kỳ nào).
+  const mhhk = phong?.monHocHocKy;
+  const moTa = mhhk?.monHoc?.tenMonHoc
+    ? [mhhk.monHoc.tenMonHoc, mhhk.hocKy?.tenHocKy, mhhk.hocKy?.namHoc]
+        .filter(Boolean)
+        .join(' · ')
+    : 'Danh sách lượt nộp bài của học sinh';
 
   return (
     <div>
@@ -108,13 +130,7 @@ export default function ResultRoomScorePage() {
         </Button>
       </div>
 
-      <PageHeader
-        tieuDe={tieuDe}
-        moTa={
-          phong?.monHocHocKy?.monHoc?.tenMonHoc ??
-          'Danh sách lượt nộp bài của học sinh'
-        }
-      />
+      <PageHeader tieuDe={tieuDe} moTa={moTa} />
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -127,9 +143,9 @@ export default function ResultRoomScorePage() {
       <Table
         columns={columns}
         data={items}
-        rowKey={(r) => r.maKetQua}
+        rowKey={(r) => r.maNguoiDung}
         dangTai={dangTai}
-        rong="Chưa có học sinh nào nộp bài"
+        rong="Chưa có học sinh nào được gán vào phòng"
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
