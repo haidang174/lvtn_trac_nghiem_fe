@@ -112,6 +112,12 @@ export default function ExamRoomFormPage() {
     if (maBaiThis.length === 0)
       return toast.error('Vui lòng chọn ít nhất 1 đề thi');
     if (thoiGianLamBai < 1) return toast.error('Thời lượng phải ≥ 1 phút');
+    const dsChon = deCongKhai.filter((d) => maBaiThis.includes(d.maBaiThi));
+    const maxDe = dsChon.length ? Math.max(...dsChon.map((d) => d.thoiGianLamBai)) : 0;
+    if (thoiGianLamBai < maxDe)
+      return toast.error(
+        `Thời lượng phòng (${thoiGianLamBai} phút) không được nhỏ hơn thời lượng đề dài nhất (${maxDe} phút)`,
+      );
     if (!moLuc) return toast.error('Vui lòng nhập thời gian mở phòng');
     if (new Date(moLuc) < new Date())
       return toast.error('Thời gian mở phòng không được ở quá khứ');
