@@ -24,22 +24,6 @@ export interface KetQuaCuaToi {
   dongLuc: string;
 }
 
-// Một dòng kết quả cho GV/Admin (raw từ getResults).
-export interface KetQuaItem {
-  maKetQua: number;
-  maBaiLam: number;
-  maBaiThi: number;
-  maNguoiDung: number;
-  tenNguoiDung: string | null;
-  email: string | null;
-  diemSo: number | string;
-  tongSoCau: number;
-  soCauDung: number;
-  tieuDe: string;
-  maPhongThi: number;
-  thoiGianNop: string;
-}
-
 // Một dòng bảng điểm phòng: mọi HS được gán vào phòng, kèm điểm nếu đã thi.
 export interface BangDiemPhongItem {
   maNguoiDung: number;

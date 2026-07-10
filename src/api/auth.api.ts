@@ -57,9 +57,6 @@ export const authApi = {
   forgotPassword: (email: string) =>
     axiosClient.post('/auth/forgot-password', { email }) as unknown as Promise<null>,
 
-  verifyOtp: (email: string, otp: string) =>
-    axiosClient.post('/auth/verify-otp', { email, otp }) as unknown as Promise<null>,
-
   resetPassword: (payload: ResetPasswordPayload) =>
     axiosClient.post('/auth/reset-password', payload) as unknown as Promise<null>,
 
