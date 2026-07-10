@@ -21,18 +21,9 @@ export const subjectOfferingsApi = {
       PaginatedData<MonHocHocKy>
     >,
 
-  getOfferingById: (id: number) =>
-    axiosClient.get(`/subject-offerings/${id}`) as unknown as Promise<MonHocHocKy>,
-
   // Giáo viên: các môn-học-kỳ mình được phân dạy.
   getMyTeaching: () =>
     axiosClient.get('/subject-offerings/me/teaching') as unknown as Promise<
-      MonHocHocKy[]
-    >,
-
-  // Học sinh: các môn-học-kỳ mình đã ghi danh.
-  getMyEnrolled: () =>
-    axiosClient.get('/subject-offerings/me/enrolled') as unknown as Promise<
       MonHocHocKy[]
     >,
 

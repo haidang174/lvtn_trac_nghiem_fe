@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import type { PhienThi, CauHoiPhien, KetQuaTomTat } from '@/types/bai-lam.type';
+import type { PhienThi, KetQuaTomTat } from '@/types/bai-lam.type';
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`. Các API này chỉ dành cho học sinh.
 export const examSessionsApi = {
@@ -9,9 +9,6 @@ export const examSessionsApi = {
 
   getExamSession: (id: number) =>
     axiosClient.get(`/exam-sessions/${id}`) as unknown as Promise<PhienThi>,
-
-  getSessionQuestion: (id: number, order: number) =>
-    axiosClient.get(`/exam-sessions/${id}/questions/${order}`) as unknown as Promise<CauHoiPhien>,
 
   // maLuaChons rỗng = bỏ chọn câu hỏi.
   submitAnswer: (id: number, maCauHoi: number, maLuaChons: number[]) =>
