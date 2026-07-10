@@ -31,11 +31,11 @@ export default function SubjectDetailPage() {
       .finally(() => setDangTaiMon(false));
   }, [id, maMonHoc, toast]);
 
-  // Các học kỳ mà môn này đã được mở (kể cả đã gỡ) — lấy cả offering laHoatDong=false.
+  // Các học kỳ mà môn này còn đang được mở — chỉ lấy offering đang hoạt động (laHoatDong=true).
   useEffect(() => {
     if (!id) return;
     subjectOfferingsApi
-      .getOfferings({ page: 1, limit: 1000, maMonHoc })
+      .getOfferings({ page: 1, limit: 1000, maMonHoc, laHoatDong: true })
       .then((res) => setOfferings(res.items))
       .catch((err) => toast.error(chuanHoaLoi(err).message))
       .finally(() => setDangTaiHK(false));
