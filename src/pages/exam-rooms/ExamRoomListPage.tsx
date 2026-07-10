@@ -137,7 +137,7 @@ export default function ExamRoomListPage() {
             className="!px-2 !py-1 text-red-600 hover:bg-red-50"
             onClick={() => setChonXoa(p)}
           >
-            🗑️ Xóa
+            Ẩn
           </Button>
         </div>
       ),
@@ -150,9 +150,18 @@ export default function ExamRoomListPage() {
         tieuDe="Quản lý phòng thi"
         moTa="Tạo phòng từ đề công khai của giáo viên và theo dõi thí sinh"
         hanhDong={
-          <Button type="button" onClick={() => navigate('/exam-rooms/new')}>
-            + Tạo phòng thi
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => navigate('/exam-rooms/deleted')}
+            >
+              Phòng đã ẩn
+            </Button>
+            <Button type="button" onClick={() => navigate('/exam-rooms/new')}>
+              + Tạo phòng thi
+            </Button>
+          </div>
         }
       />
 

@@ -16,6 +16,7 @@ import ExamListPage from '@/pages/exams/ExamListPage';
 import ExamFormPage from '@/pages/exams/ExamFormPage';
 import ExamDetailPage from '@/pages/exams/ExamDetailPage';
 import ExamRoomListPage from '@/pages/exam-rooms/ExamRoomListPage';
+import ExamRoomTrashPage from '@/pages/exam-rooms/ExamRoomTrashPage';
 import ExamRoomFormPage from '@/pages/exam-rooms/ExamRoomFormPage';
 import ExamRoomDetailPage from '@/pages/exam-rooms/ExamRoomDetailPage';
 import JoinRoomPage from '@/pages/exam-sessions/JoinRoomPage';
@@ -98,6 +99,7 @@ export const moduleRoutes: RouteObject[] = [
     element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
     children: [
       { path: '/exam-rooms', element: <ExamRoomListPage /> },
+      { path: '/exam-rooms/deleted', element: <ExamRoomTrashPage /> },
       { path: '/exam-rooms/new', element: <ExamRoomFormPage /> },
       { path: '/exam-rooms/:id', element: <ExamRoomDetailPage /> },
       { path: '/exam-rooms/:id/edit', element: <ExamRoomFormPage /> },
