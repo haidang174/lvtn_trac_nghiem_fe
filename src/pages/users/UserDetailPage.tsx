@@ -14,6 +14,7 @@ import { NHAN_VAI_TRO, VaiTro } from '@/enums/vaiTro';
 import { TrangThaiBaiLam, NHAN_TRANG_THAI_BAI_LAM } from '@/enums/trangThaiBaiLam';
 import { formatScore } from '@/utils/formatScore';
 import { formatDateTime } from '@/utils/formatDate';
+import { gomTheoMon, xuatBangDiemExcel } from '@/utils/bangDiemHocSinh';
 import type { NguoiDung } from '@/types/nguoi-dung.type';
 import type { KetQuaCuaToi } from '@/types/ket-qua.type';
 
@@ -22,36 +23,6 @@ const mauTrangThai: Record<TrangThaiBaiLam, MauBadge> = {
   da_nop: 'green',
   het_thoi_gian: 'red',
 };
-
-// Một môn trong bảng điểm: danh sách dòng + điểm trung bình các dòng đã thi.
-interface NhomMon {
-  maMonHoc: number;
-  tenMonHoc: string | null;
-  danhSach: KetQuaCuaToi[];
-  diemTB: number | null;
-}
-
-// Gom các dòng kết quả theo môn, tính điểm TB của các dòng đã thi (bỏ vắng thi).
-function gomTheoMon(items: KetQuaCuaToi[]): NhomMon[] {
-  const map = new Map<number, KetQuaCuaToi[]>();
-  for (const it of items) {
-    const ds = map.get(it.maMonHoc) ?? [];
-    ds.push(it);
-    map.set(it.maMonHoc, ds);
-  }
-  return Array.from(map.values()).map((danhSach) => {
-    const daThi = danhSach.filter((r) => r.daThi);
-    const diemTB = daThi.length
-      ? daThi.reduce((s, r) => s + Number(r.diemSo), 0) / daThi.length
-      : null;
-    return {
-      maMonHoc: danhSach[0].maMonHoc,
-      tenMonHoc: danhSach[0].tenMonHoc,
-      danhSach,
-      diemTB,
-    };
-  });
-}
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -241,7 +212,17 @@ export default function UserDetailPage() {
 
       {user.vaiTro === VaiTro.HOC_SINH && (
         <div className="mt-6">
-          <h3 className="mb-3 text-lg font-semibold text-gray-900">Bảng điểm các môn</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Bảng điểm các môn</h3>
+            <Button
+              variant="outline"
+              type="button"
+              disabled={dangTaiDiem || nhomMon.length === 0}
+              onClick={() => xuatBangDiemExcel(user, nhomMon)}
+            >
+              Xuất Excel
+            </Button>
+          </div>
           {dangTaiDiem ? (
             <div className="flex justify-center py-10">
               <Spinner />
