@@ -2,18 +2,11 @@ import axiosClient from './axiosClient';
 import type { PaginatedData, PaginationParams } from '@/types/api-response.type';
 import type {
   KetQuaCuaToi,
-  KetQuaItem,
   KetQuaChiTiet,
   ThongKeKetQua,
   ThongKePhong,
   BangDiemPhongItem,
 } from '@/types/ket-qua.type';
-
-export interface QueryResultParams extends PaginationParams {
-  maBaiThi?: number;
-  maPhongThi?: number;
-  maNguoiDung?: number;
-}
 
 export interface QueryMyResultParams extends PaginationParams {
   // Tìm theo tên đề thi.
@@ -53,10 +46,6 @@ export const resultsApi = {
   // Admin: bảng điểm tất cả môn của 1 học sinh (mảng phẳng, gom nhóm ở FE).
   getStudentResults: (maHocSinh: number) =>
     axiosClient.get(`/results/students/${maHocSinh}`) as unknown as Promise<KetQuaCuaToi[]>,
-
-  // GV/Admin: danh sách kết quả theo đề/phòng/người dùng.
-  getResults: (params: QueryResultParams) =>
-    axiosClient.get('/results', { params }) as unknown as Promise<PaginatedData<KetQuaItem>>,
 
   // GV/Admin: thống kê điểm.
   getResultStats: (params: QueryStatsParams) =>
