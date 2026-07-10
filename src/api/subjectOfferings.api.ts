@@ -30,11 +30,6 @@ export const subjectOfferingsApi = {
   createOffering: (payload: CreateSubjectOfferingPayload) =>
     axiosClient.post('/subject-offerings', payload) as unknown as Promise<MonHocHocKy>,
 
-  updateOfferingStatus: (id: number, laHoatDong: boolean) =>
-    axiosClient.patch(`/subject-offerings/${id}/status`, {
-      laHoatDong,
-    }) as unknown as Promise<MonHocHocKy>,
-
   deleteOffering: (id: number) =>
     axiosClient.delete(`/subject-offerings/${id}`) as unknown as Promise<null>,
 };
