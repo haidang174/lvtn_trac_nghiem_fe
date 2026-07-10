@@ -113,8 +113,11 @@ export default function ResultHistoryPage() {
     {
       tieuDe: '',
       className: 'text-right',
-      render: (r) =>
-        r.daThi && r.maKetQua != null ? (
+      render: (r) => {
+        if (!r.daThi || r.maKetQua == null) return null;
+        // Chi tiết bài làm chỉ mở sau khi phòng đóng (BE chặn trước dongLuc).
+        const daMoChiTiet = new Date() >= new Date(r.dongLuc);
+        return daMoChiTiet ? (
           <Button
             variant="ghost"
             type="button"
@@ -123,7 +126,15 @@ export default function ResultHistoryPage() {
           >
             Xem chi tiết
           </Button>
-        ) : null,
+        ) : (
+          <span
+            className="text-xs text-gray-400"
+            title="Chi tiết bài làm chỉ xem được sau khi phòng thi đóng"
+          >
+            🔒 Mở khi phòng đóng
+          </span>
+        );
+      },
     },
   ];
 
