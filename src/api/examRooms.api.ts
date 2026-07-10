@@ -20,7 +20,6 @@ export interface QueryExamRoomParams extends PaginationParams {
   search?: string;
   maMonHocHocKy?: number;
   trangThai?: TrangThaiPhongThi;
-  laHoatDong?: boolean; // false = phòng đã xóa mềm (trang thùng rác).
 }
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
