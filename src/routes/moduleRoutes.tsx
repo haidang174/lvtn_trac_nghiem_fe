@@ -19,6 +19,7 @@ import ExamRoomListPage from '@/pages/exam-rooms/ExamRoomListPage';
 import ExamRoomFormPage from '@/pages/exam-rooms/ExamRoomFormPage';
 import ExamRoomDetailPage from '@/pages/exam-rooms/ExamRoomDetailPage';
 import JoinRoomPage from '@/pages/exam-sessions/JoinRoomPage';
+import StudentEnrollPage from '@/pages/enrollments/StudentEnrollPage';
 import ResultHistoryPage from '@/pages/results/ResultHistoryPage';
 import ResultListPage from '@/pages/results/ResultListPage';
 import ResultRoomScorePage from '@/pages/results/ResultRoomScorePage';
@@ -101,6 +102,12 @@ export const moduleRoutes: RouteObject[] = [
       { path: '/exam-rooms/:id', element: <ExamRoomDetailPage /> },
       { path: '/exam-rooms/:id/edit', element: <ExamRoomFormPage /> },
     ],
+  },
+
+  // ----- Đăng ký môn học (chỉ HS) -----
+  {
+    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.HOC_SINH]} />,
+    children: [{ path: '/enroll', element: <StudentEnrollPage /> }],
   },
 
   // ----- Vào phòng thi (chỉ HS) — trang /exam/:id dùng ExamLayout riêng ở routes/index -----

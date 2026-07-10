@@ -1,22 +1,38 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
-import StatusBadge from '@/components/common/StatusBadge';
+import StatusBadge, { type MauBadge } from '@/components/common/StatusBadge';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import Table, { type ColumnDef } from '@/components/common/Table';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import { usersApi } from '@/api/users.api';
+import { resultsApi } from '@/api/results.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
-import { NHAN_VAI_TRO } from '@/enums/vaiTro';
+import { NHAN_VAI_TRO, VaiTro } from '@/enums/vaiTro';
+import { TrangThaiBaiLam, NHAN_TRANG_THAI_BAI_LAM } from '@/enums/trangThaiBaiLam';
+import { formatScore } from '@/utils/formatScore';
+import { formatDateTime } from '@/utils/formatDate';
+import { gomTheoMon, xuatBangDiemExcel } from '@/utils/bangDiemHocSinh';
 import type { NguoiDung } from '@/types/nguoi-dung.type';
+import type { KetQuaCuaToi } from '@/types/ket-qua.type';
+
+const mauTrangThai: Record<TrangThaiBaiLam, MauBadge> = {
+  dang_lam: 'amber',
+  da_nop: 'green',
+  het_thoi_gian: 'red',
+};
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [user, setUser] = useState<NguoiDung | null>(null);
   const [dangTai, setDangTai] = useState(true);
   const [xacNhan, setXacNhan] = useState(false);
   const [dangXuLy, setDangXuLy] = useState(false);
+  const [dsKetQua, setDsKetQua] = useState<KetQuaCuaToi[]>([]);
+  const [dangTaiDiem, setDangTaiDiem] = useState(false);
   const toast = useToast();
 
   const taiDuLieu = useCallback(async () => {
@@ -35,6 +51,22 @@ export default function UserDetailPage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
+  // Chỉ tải bảng điểm khi người dùng đang xem là Học sinh.
+  useEffect(() => {
+    if (!user || user.vaiTro !== VaiTro.HOC_SINH) {
+      setDsKetQua([]);
+      return;
+    }
+    setDangTaiDiem(true);
+    resultsApi
+      .getStudentResults(user.maNguoiDung)
+      .then(setDsKetQua)
+      .catch((err) => toast.error(chuanHoaLoi(err).message))
+      .finally(() => setDangTaiDiem(false));
+  }, [user, toast]);
+
+  const nhomMon = useMemo(() => gomTheoMon(dsKetQua), [dsKetQua]);
+
   const xacNhanDoiTrangThai = async () => {
     if (!user) return;
     setDangXuLy(true);
@@ -49,6 +81,60 @@ export default function UserDetailPage() {
       setDangXuLy(false);
     }
   };
+
+  const columns: ColumnDef<KetQuaCuaToi>[] = [
+    {
+      tieuDe: 'Phòng thi',
+      render: (r) => <span className="font-semibold text-gray-900">{r.tenPhongThi}</span>,
+    },
+    { tieuDe: 'Đề thi', render: (r) => r.tieuDe ?? '—' },
+    {
+      tieuDe: 'Điểm',
+      className: 'text-center',
+      render: (r) =>
+        r.daThi ? (
+          <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      tieuDe: 'Đúng/Tổng',
+      className: 'text-center',
+      render: (r) => (r.daThi ? `${r.soCauDung}/${r.tongSoCau}` : '—'),
+    },
+    {
+      tieuDe: 'Nộp lúc',
+      render: (r) => (r.daThi && r.thoiGianNop ? formatDateTime(r.thoiGianNop) : '—'),
+    },
+    {
+      tieuDe: 'Trạng thái',
+      render: (r) =>
+        r.daThi && r.trangThaiBaiLam ? (
+          <StatusBadge mau={mauTrangThai[r.trangThaiBaiLam] ?? 'gray'}>
+            {NHAN_TRANG_THAI_BAI_LAM[r.trangThaiBaiLam] ?? r.trangThaiBaiLam}
+          </StatusBadge>
+        ) : (
+          <StatusBadge mau="gray">Không tham gia</StatusBadge>
+        ),
+    },
+    {
+      tieuDe: '',
+      className: 'text-right',
+      // Admin luôn xem được chi tiết (không khóa như phía học sinh).
+      render: (r) =>
+        r.daThi && r.maKetQua != null ? (
+          <Button
+            variant="ghost"
+            type="button"
+            className="!px-2 !py-1"
+            onClick={() => navigate(`/results/${r.maKetQua}`)}
+          >
+            Xem chi tiết
+          </Button>
+        ) : null,
+    },
+  ];
 
   if (dangTai) {
     return (
@@ -123,6 +209,61 @@ export default function UserDetailPage() {
           </div>
         </dl>
       </div>
+
+      {user.vaiTro === VaiTro.HOC_SINH && (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Bảng điểm các môn</h3>
+            <Button
+              variant="outline"
+              type="button"
+              disabled={dangTaiDiem || nhomMon.length === 0}
+              onClick={() => xuatBangDiemExcel(user, nhomMon)}
+            >
+              Xuất Excel
+            </Button>
+          </div>
+          {dangTaiDiem ? (
+            <div className="flex justify-center py-10">
+              <Spinner />
+            </div>
+          ) : nhomMon.length === 0 ? (
+            <div className="rounded-xl border border-gray-200 bg-white py-10 text-center text-gray-500">
+              Học sinh chưa có kết quả thi nào.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {nhomMon.map((mon) => (
+                <div
+                  key={mon.maMonHoc}
+                  className="rounded-xl border border-gray-200 bg-white p-4"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-900">
+                      {mon.tenMonHoc ?? 'Môn học'}
+                    </h4>
+                    <span className="text-sm text-gray-600">
+                      Điểm TB:{' '}
+                      {mon.diemTB != null ? (
+                        <span className="font-bold text-primary">
+                          {formatScore(mon.diemTB)}/10
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </span>
+                  </div>
+                  <Table
+                    columns={columns}
+                    data={mon.danhSach}
+                    rowKey={(r) => r.maPhongThi}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <ConfirmDialog
         moRa={xacNhan}
