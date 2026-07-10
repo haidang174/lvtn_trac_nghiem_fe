@@ -52,6 +52,12 @@ export const NAV_ITEMS: NavItem[] = [
     vaiTro: [VaiTro.QUAN_TRI_VIEN],
   },
   {
+    path: '/enroll',
+    nhan: 'Đăng ký môn học',
+    icon: '📝',
+    vaiTro: [VaiTro.HOC_SINH],
+  },
+  {
     path: '/join',
     nhan: 'Phòng thi',
     icon: '🚪',

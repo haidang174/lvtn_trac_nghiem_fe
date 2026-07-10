@@ -30,23 +30,21 @@ export default function SemesterDetailPage() {
   const [offerings, setOfferings] = useState<MonHocHocKy[]>([]);
   const [monHocs, setMonHocs] = useState<MonHoc[]>([]);
   const [giaoViens, setGiaoViens] = useState<NguoiDung[]>([]);
-  const [hocSinhs, setHocSinhs] = useState<NguoiDung[]>([]);
   const [dangTai, setDangTai] = useState(true);
 
   // Môn để mở thêm.
   const [monThem, setMonThem] = useState('');
 
-  // Offering đang chọn để quản lý phân công/ghi danh.
+  // Offering đang chọn để quản lý phân công (ghi danh chỉ xem).
   const [chon, setChon] = useState<MonHocHocKy | null>(null);
   const [phanCongs, setPhanCongs] = useState<PhanCongGiangDay[]>([]);
   const [ghiDanhs, setGhiDanhs] = useState<GhiDanh[]>([]);
   const [gvThem, setGvThem] = useState('');
-  const [hsThem, setHsThem] = useState('');
 
   const taiNen = useCallback(async () => {
     setDangTai(true);
     try {
-      const [hk, off, mh, gv, hs] = await Promise.all([
+      const [hk, off, mh, gv] = await Promise.all([
         semestersApi.getSemesterById(maHocKy),
         subjectOfferingsApi.getOfferings({
           page: 1,
@@ -56,13 +54,11 @@ export default function SemesterDetailPage() {
         }),
         subjectsApi.getSubjects({ page: 1, limit: 1000, laHoatDong: true }),
         usersApi.getUsers({ page: 1, limit: 1000, vaiTro: VaiTro.GIAO_VIEN }),
-        usersApi.getUsers({ page: 1, limit: 1000, vaiTro: VaiTro.HOC_SINH }),
       ]);
       setHocKy(hk);
       setOfferings(off.items);
       setMonHocs(mh.items);
       setGiaoViens(gv.items);
-      setHocSinhs(hs.items);
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
     } finally {
@@ -94,7 +90,6 @@ export default function SemesterDetailPage() {
   const chonOffering = (mhhk: MonHocHocKy) => {
     setChon(mhhk);
     setGvThem('');
-    setHsThem('');
     taiChiTietOffering(mhhk);
   };
 
@@ -167,49 +162,6 @@ export default function SemesterDetailPage() {
     }
   };
 
-  const themHs = async () => {
-    if (!chon || !hsThem) return;
-    try {
-      await enrollmentsApi.createEnrollment({
-        maMonHocHocKy: chon.maMonHocHocKy,
-        maHocSinh: Number(hsThem),
-      });
-      setHsThem('');
-      taiChiTietOffering(chon);
-    } catch (err) {
-      toast.error(chuanHoaLoi(err).message);
-    }
-  };
-
-  const themTatCaHs = async () => {
-    if (!chon) return;
-    const daCo = new Set(ghiDanhs.map((g) => g.maHocSinh));
-    const conLai = hocSinhs
-      .filter((h) => !daCo.has(h.maNguoiDung))
-      .map((h) => h.maNguoiDung);
-    if (conLai.length === 0) return toast.error('Không còn học sinh nào để thêm');
-    try {
-      const kq = await enrollmentsApi.createBulk({
-        maMonHocHocKy: chon.maMonHocHocKy,
-        maHocSinhs: conLai,
-      });
-      toast.success(`Đã ghi danh ${kq.soLuongGhiDanh} học sinh`);
-      taiChiTietOffering(chon);
-    } catch (err) {
-      toast.error(chuanHoaLoi(err).message);
-    }
-  };
-
-  const xoaHs = async (maGhiDanh: number) => {
-    if (!chon) return;
-    try {
-      await enrollmentsApi.deleteEnrollment(maGhiDanh);
-      taiChiTietOffering(chon);
-    } catch (err) {
-      toast.error(chuanHoaLoi(err).message);
-    }
-  };
-
   if (dangTai) {
     return (
       <div className="flex justify-center py-20">
@@ -234,7 +186,6 @@ export default function SemesterDetailPage() {
   const monChuaMo = monHocs.filter((m) => !daMo.has(m.maMonHoc));
 
   const gvDaPhan = new Set(phanCongs.map((p) => p.maGiaoVien));
-  const hsDaGhi = new Set(ghiDanhs.map((g) => g.maHocSinh));
 
   // Học kỳ đã kết thúc → chỉ xem, không mở/gỡ môn, không phân công/ghi danh.
   const daKetThuc = hocKy.daKetThuc;
@@ -252,7 +203,7 @@ export default function SemesterDetailPage() {
 
       {daKetThuc && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Học kỳ đã kết thúc — chỉ xem lại, không thể mở/gỡ môn học hay thay đổi phân công, ghi danh.
+          Học kỳ đã kết thúc — chỉ xem lại, không thể mở/gỡ môn học hay thay đổi phân công giáo viên.
         </div>
       )}
 
@@ -319,7 +270,7 @@ export default function SemesterDetailPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           {!chon ? (
             <p className="py-10 text-center text-sm text-gray-400">
-              Chọn một môn học bên trái để phân công giáo viên & ghi danh học sinh.
+              Chọn một môn học bên trái để phân công giáo viên & xem học sinh đã đăng ký.
             </p>
           ) : (
             <div className="space-y-5">
@@ -373,50 +324,30 @@ export default function SemesterDetailPage() {
                 </ul>
               </div>
 
-              {/* Ghi danh HS */}
+              {/* Học sinh đã đăng ký (chỉ xem — HS tự đăng ký) */}
               <div>
                 <h4 className="mb-2 text-sm font-medium text-gray-700">
-                  Học sinh ghi danh ({ghiDanhs.length})
+                  Học sinh đã đăng ký ({ghiDanhs.length})
                 </h4>
-                {!daKetThuc && (
-                  <div className="mb-2 flex gap-2">
-                    <Select
-                      placeholder="-- Chọn học sinh --"
-                      value={hsThem}
-                      onChange={(e) => setHsThem(e.target.value)}
-                      options={hocSinhs
-                        .filter((h) => !hsDaGhi.has(h.maNguoiDung))
-                        .map((h) => ({
-                          value: h.maNguoiDung,
-                          label: `${h.tenNguoiDung} (${h.email})`,
-                        }))}
-                    />
-                    <Button type="button" onClick={themHs}>
-                      + Ghi danh
-                    </Button>
-                    <Button variant="secondary" type="button" onClick={themTatCaHs}>
-                      Tất cả
-                    </Button>
-                  </div>
+                <p className="mb-2 text-xs text-gray-400">
+                  Danh sách Học sinh đăng ký môn học.
+                </p>
+                {ghiDanhs.length === 0 ? (
+                  <p className="py-2 text-sm text-gray-400">
+                    Chưa có học sinh nào đăng ký.
+                  </p>
+                ) : (
+                  <ul className="max-h-60 space-y-1 overflow-y-auto">
+                    {ghiDanhs.map((g) => (
+                      <li
+                        key={g.maGhiDanh}
+                        className="rounded border border-gray-200 px-2 py-1 text-sm"
+                      >
+                        {g.hocSinh?.tenNguoiDung ?? `#${g.maHocSinh}`}
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                <ul className="max-h-60 space-y-1 overflow-y-auto">
-                  {ghiDanhs.map((g) => (
-                    <li
-                      key={g.maGhiDanh}
-                      className="flex items-center justify-between rounded border border-gray-200 px-2 py-1 text-sm"
-                    >
-                      <span>{g.hocSinh?.tenNguoiDung ?? `#${g.maHocSinh}`}</span>
-                      {!daKetThuc && (
-                        <button
-                          className="text-red-600 hover:underline"
-                          onClick={() => xoaHs(g.maGhiDanh)}
-                        >
-                          Hủy
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           )}
