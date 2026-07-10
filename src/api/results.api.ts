@@ -50,6 +50,10 @@ export const resultsApi = {
   getMySubjects: () =>
     axiosClient.get('/results/me/subjects') as unknown as Promise<MonDaThi[]>,
 
+  // Admin: bảng điểm tất cả môn của 1 học sinh (mảng phẳng, gom nhóm ở FE).
+  getStudentResults: (maHocSinh: number) =>
+    axiosClient.get(`/results/students/${maHocSinh}`) as unknown as Promise<KetQuaCuaToi[]>,
+
   // GV/Admin: danh sách kết quả theo đề/phòng/người dùng.
   getResults: (params: QueryResultParams) =>
     axiosClient.get('/results', { params }) as unknown as Promise<PaginatedData<KetQuaItem>>,
