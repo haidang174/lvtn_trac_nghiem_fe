@@ -1,21 +1,25 @@
 import type { LoaiCauHoi } from '@/enums/loaiCauHoi';
 import type { TrangThaiBaiLam } from '@/enums/trangThaiBaiLam';
 
-// Một dòng lịch sử thi của học sinh (raw từ getMyResults).
+// Một dòng lịch sử thi của học sinh (raw từ getMyResults). Mỗi dòng = 1 phòng
+// đã đóng em được gán; phòng em KHÔNG tham gia có daThi=false, các trường
+// điểm/đề = null.
 export interface KetQuaCuaToi {
-  maKetQua: number;
-  maBaiLam: number;
-  maBaiThi: number;
-  diemSo: number | string;
-  tongSoCau: number;
-  soCauDung: number;
-  tieuDe: string;
+  maPhongThi: number;
+  tenPhongThi: string;
   maMonHoc: number;
   tenMonHoc: string | null;
-  maPhongThi: number;
-  thoiGianBatDau: string;
-  thoiGianNop: string;
-  trangThaiBaiLam: TrangThaiBaiLam;
+  daThi: boolean;
+  maKetQua: number | null;
+  maBaiLam: number | null;
+  maBaiThi: number | null;
+  diemSo: number | string | null;
+  tongSoCau: number | null;
+  soCauDung: number | null;
+  tieuDe: string | null;
+  thoiGianBatDau: string | null;
+  thoiGianNop: string | null;
+  trangThaiBaiLam: TrangThaiBaiLam | null;
   // Giờ đóng phòng — chi tiết kết quả chỉ mở sau thời điểm này.
   dongLuc: string;
 }

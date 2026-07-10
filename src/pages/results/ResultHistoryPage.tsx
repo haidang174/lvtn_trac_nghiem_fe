@@ -72,35 +72,49 @@ export default function ResultHistoryPage() {
 
   const columns: ColumnDef<KetQuaCuaToi>[] = [
     {
+      tieuDe: 'Phòng thi',
+      render: (r) => <span className="font-semibold text-gray-900">{r.tenPhongThi}</span>,
+    },
+    {
       tieuDe: 'Đề thi',
-      render: (r) => <span className="font-medium text-gray-900">{r.tieuDe}</span>,
+      render: (r) => <span className="font-medium text-gray-900">{r.tieuDe ?? '—'}</span>,
     },
     { tieuDe: 'Môn học', render: (r) => r.tenMonHoc ?? '—' },
     {
       tieuDe: 'Điểm',
       className: 'text-center',
-      render: (r) => <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>,
+      render: (r) =>
+        r.daThi ? (
+          <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
+        ) : (
+          '—'
+        ),
     },
     {
       tieuDe: 'Đúng/Tổng',
       className: 'text-center',
-      render: (r) => `${r.soCauDung}/${r.tongSoCau}`,
+      render: (r) => (r.daThi ? `${r.soCauDung}/${r.tongSoCau}` : '—'),
     },
-    { tieuDe: 'Nộp lúc', render: (r) => formatDateTime(r.thoiGianNop) },
+    {
+      tieuDe: 'Nộp lúc',
+      render: (r) => (r.daThi && r.thoiGianNop ? formatDateTime(r.thoiGianNop) : '—'),
+    },
     {
       tieuDe: 'Trạng thái',
-      render: (r) => (
-        <StatusBadge mau={mauTrangThai[r.trangThaiBaiLam] ?? 'gray'}>
-          {NHAN_TRANG_THAI_BAI_LAM[r.trangThaiBaiLam] ?? r.trangThaiBaiLam}
-        </StatusBadge>
-      ),
+      render: (r) =>
+        r.daThi && r.trangThaiBaiLam ? (
+          <StatusBadge mau={mauTrangThai[r.trangThaiBaiLam] ?? 'gray'}>
+            {NHAN_TRANG_THAI_BAI_LAM[r.trangThaiBaiLam] ?? r.trangThaiBaiLam}
+          </StatusBadge>
+        ) : (
+          <StatusBadge mau="gray">Không tham gia</StatusBadge>
+        ),
     },
     {
       tieuDe: '',
       className: 'text-right',
-      render: (r) => {
-        const daMoChiTiet = new Date() >= new Date(r.dongLuc);
-        return daMoChiTiet ? (
+      render: (r) =>
+        r.daThi && r.maKetQua != null ? (
           <Button
             variant="ghost"
             type="button"
@@ -109,15 +123,7 @@ export default function ResultHistoryPage() {
           >
             Xem chi tiết
           </Button>
-        ) : (
-          <span
-            className="text-xs text-gray-400"
-            title="Chi tiết bài làm chỉ xem được sau khi phòng thi đóng"
-          >
-            🔒 Mở khi phòng đóng
-          </span>
-        );
-      },
+        ) : null,
     },
   ];
 
@@ -127,7 +133,7 @@ export default function ResultHistoryPage() {
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SearchInput
-          placeholder="Tìm theo tên đề thi..."
+          placeholder="Tìm theo tên phòng / đề thi..."
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
         />
@@ -142,9 +148,9 @@ export default function ResultHistoryPage() {
       <Table
         columns={columns}
         data={items}
-        rowKey={(r) => r.maKetQua}
+        rowKey={(r) => r.maPhongThi}
         dangTai={dangTai}
-        rong="Bạn chưa có kết quả thi nào"
+        rong="Bạn chưa được gán vào phòng thi đã kết thúc nào"
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />

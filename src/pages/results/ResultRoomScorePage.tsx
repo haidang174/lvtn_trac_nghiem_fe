@@ -11,6 +11,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
+import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 
@@ -58,6 +59,12 @@ export default function ResultRoomScorePage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
+  // Phòng đã đóng → HS chưa có điểm là "Bỏ thi"; phòng chưa đóng vẫn "Chưa thi".
+  const phongDaDong = phong
+    ? phong.trangThai === TrangThaiPhongThi.DA_DONG ||
+      new Date() >= new Date(phong.dongLuc)
+    : false;
+
   const columns: ColumnDef<BangDiemPhongItem>[] = [
     {
       tieuDe: 'Học sinh',
@@ -78,6 +85,10 @@ export default function ResultRoomScorePage() {
       render: (r) =>
         r.daThi ? (
           <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
+        ) : phongDaDong ? (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+            Bỏ thi
+          </span>
         ) : (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
             Chưa thi
