@@ -73,12 +73,6 @@ export default function SubjectDetailPage() {
 
       <div className="mb-5 rounded-xl border border-gray-200 bg-white p-5">
         <div className="flex flex-wrap items-center gap-4 text-sm">
-          {monHoc.maMon && (
-            <div>
-              <span className="text-gray-500">Mã môn: </span>
-              <span className="font-medium text-gray-800">{monHoc.maMon}</span>
-            </div>
-          )}
           <div>
             <span className="text-gray-500">Trạng thái: </span>
             {monHoc.laHoatDong ? (
