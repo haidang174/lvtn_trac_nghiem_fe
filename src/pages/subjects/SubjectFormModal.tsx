@@ -17,7 +17,6 @@ interface Props {
 
 export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Props) {
   const laSua = !!monHoc;
-  const [maMon, setMaMon] = useState('');
   const [tenMonHoc, setTenMonHoc] = useState('');
   const [moTa, setMoTa] = useState('');
   const [dangLuu, setDangLuu] = useState(false);
@@ -26,7 +25,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
   // Nạp lại dữ liệu mỗi khi mở modal (tạo mới = rỗng, sửa = giá trị cũ).
   useEffect(() => {
     if (moRa) {
-      setMaMon(monHoc?.maMon ?? '');
       setTenMonHoc(monHoc?.tenMonHoc ?? '');
       setMoTa(monHoc?.moTa ?? '');
     }
@@ -37,7 +35,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
     setDangLuu(true);
     try {
       const payload = {
-        maMon: maMon.trim() || undefined,
         tenMonHoc: tenMonHoc.trim(),
         moTa: moTa.trim() || undefined,
       };
@@ -74,14 +71,6 @@ export default function SubjectFormModal({ moRa, monHoc, onDong, onLuuXong }: Pr
       }
     >
       <form id="subject-form" onSubmit={xuLyLuu} className="space-y-4">
-        <Input
-          label="Mã môn"
-          name="maMon"
-          maxLength={50}
-          value={maMon}
-          onChange={(e) => setMaMon(e.target.value)}
-          placeholder="VD: MATH101"
-        />
         <Input
           label="Tên môn học *"
           name="tenMonHoc"

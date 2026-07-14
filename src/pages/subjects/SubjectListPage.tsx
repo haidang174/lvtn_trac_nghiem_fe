@@ -159,7 +159,7 @@ export default function SubjectListPage() {
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SearchInput
-          placeholder="Tìm theo tên môn hoặc mã định danh..."
+          placeholder="Tìm theo tên môn..."
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
         />

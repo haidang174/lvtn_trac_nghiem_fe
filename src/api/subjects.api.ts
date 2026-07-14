@@ -3,7 +3,6 @@ import type { MonHoc } from '@/types/mon-hoc.type';
 import type { PaginatedData, PaginationParams } from '@/types/api-response.type';
 
 export interface CreateSubjectPayload {
-  maMon?: string;
   tenMonHoc: string;
   moTa?: string;
 }
@@ -11,7 +10,7 @@ export interface CreateSubjectPayload {
 export type UpdateSubjectPayload = Partial<CreateSubjectPayload>;
 
 export interface QuerySubjectParams extends PaginationParams {
-  // Tìm theo tên môn hoặc mã định danh.
+  // Tìm theo tên môn.
   search?: string;
   laHoatDong?: boolean;
 }
