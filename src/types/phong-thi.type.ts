@@ -40,7 +40,6 @@ export interface PhongThi {
   thoiGianLamBai: number;
   moLuc: string;
   dongLuc: string;
-  laHoatDong: boolean;
   trangThai: TrangThaiPhongThi;
   monHocHocKy?: MonHocHocKy;
   phongThiBaiThis?: PhongThiBaiThi[];
