@@ -9,13 +9,14 @@ import Input from '@/components/ui/Input';
 import { resultsApi } from '@/api/results.api';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
-import { useAppSelector } from '@/store/hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
 import { xuatBangDiemPhongExcel } from '@/utils/bangDiemPhongThi';
 import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
+import { VaiTro } from '@/enums/vaiTro';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 
@@ -29,7 +30,9 @@ export default function ResultRoomScorePage() {
   const navigate = useNavigate();
   const toast = useToast();
   // Người đang đăng nhập -> "Cán bộ xuất bảng điểm" ở chân biểu mẫu.
-  const nguoiDung = useAppSelector((s) => s.auth.user);
+  const { user } = useAuth();
+  // Bảng điểm in ra là văn bản chính thức -> chỉ Admin được xuất (GV vẫn xem được bảng).
+  const laAdmin = user?.vaiTro === VaiTro.QUAN_TRI_VIEN;
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [items, setItems] = useState<BangDiemPhongItem[]>([]);
@@ -86,7 +89,7 @@ export default function ResultRoomScorePage() {
       const ds = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
       await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, {
         khoa,
-        tenCanBo: nguoiDung?.tenNguoiDung,
+        tenCanBo: user?.tenNguoiDung,
       });
       localStorage.setItem(KHOA_KEY, khoa.trim());
       setMoHopXuat(false);
@@ -177,46 +180,50 @@ export default function ResultRoomScorePage() {
         tieuDe={tieuDe}
         moTa={moTa}
         hanhDong={
-          <Button
-            variant="outline"
-            type="button"
-            disabled={!phong || dangXuat || total === 0}
-            onClick={() => setMoHopXuat(true)}
-          >
-            Xuất Excel
-          </Button>
+          laAdmin ? (
+            <Button
+              variant="outline"
+              type="button"
+              disabled={!phong || dangXuat || total === 0}
+              onClick={() => setMoHopXuat(true)}
+            >
+              Xuất Excel
+            </Button>
+          ) : undefined
         }
       />
 
       {/* Hỏi tên khoa trước khi xuất (mẫu của trường có dòng "KHOA:"). */}
-      <Modal
-        moRa={moHopXuat}
-        onDong={() => setMoHopXuat(false)}
-        tieuDe="Xuất bảng điểm ra Excel"
-        kichThuoc="sm"
-        chanDuoi={
-          <>
-            <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
-              Hủy
-            </Button>
-            <Button type="button" disabled={dangXuat} onClick={xuLyXuatExcel}>
-              {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
-            </Button>
-          </>
-        }
-      >
-        <Input
-          name="khoa"
-          label="Khoa"
-          value={khoa}
-          placeholder="VD: Công nghệ Thông tin"
-          autoFocus
-          onChange={(e) => setKhoa(e.target.value)}
-        />
-        <p className="mt-2 text-xs text-gray-500">
-          Điền vào dòng "KHOA:" trên biểu mẫu. Để trống nếu muốn ghi tay sau khi in.
-        </p>
-      </Modal>
+      {laAdmin && (
+        <Modal
+          moRa={moHopXuat}
+          onDong={() => setMoHopXuat(false)}
+          tieuDe="Xuất bảng điểm ra Excel"
+          kichThuoc="sm"
+          chanDuoi={
+            <>
+              <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
+                Hủy
+              </Button>
+              <Button type="button" disabled={dangXuat} onClick={xuLyXuatExcel}>
+                {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
+              </Button>
+            </>
+          }
+        >
+          <Input
+            name="khoa"
+            label="Khoa"
+            value={khoa}
+            placeholder="VD: Công nghệ Thông tin"
+            autoFocus
+            onChange={(e) => setKhoa(e.target.value)}
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Điền vào dòng "KHOA:" trên biểu mẫu. Để trống nếu muốn ghi tay sau khi in.
+          </p>
+        </Modal>
+      )}
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
