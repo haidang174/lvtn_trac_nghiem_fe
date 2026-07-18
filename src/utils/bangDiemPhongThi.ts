@@ -25,13 +25,16 @@ const VIEN_MONG: Partial<ExcelJS.Borders> = {
 // tiêu đề trường/quốc hiệu, "BẢNG ĐIỂM THI MÔN", tên môn + tên phòng, rồi bảng
 // TT | Email | Họ đệm | Tên | Điểm | Ghi chú (có khung viền, in được ngay).
 // Danh sách gồm MỌI học sinh được gán vào phòng, em chưa thi để trống ô điểm.
-// `khoa` do người dùng nhập lúc xuất (để trống thì ô "KHOA:" bỏ trống cho ghi tay).
+// `khoa` do người dùng nhập lúc xuất, `tenCanBo` là người đang đăng nhập —
+// để trống thì phần tương ứng chỉ in nhãn cho ghi tay.
 export async function xuatBangDiemPhongExcel(
   phong: PhongThi,
   items: BangDiemPhongItem[],
   phongDaDong: boolean,
-  khoa = '',
+  tuyChon: { khoa?: string; tenCanBo?: string } = {},
 ): Promise<void> {
+  const khoa = tuyChon.khoa ?? '';
+  const tenCanBo = tuyChon.tenCanBo ?? '';
   // Sắp theo tên rồi họ đệm (giống danh sách lớp của trường).
   const danhSach = [...items]
     .map((r) => ({ ...r, ...tachHoTen(r.tenNguoiDung ?? `#${r.maNguoiDung}`) }))
@@ -131,6 +134,33 @@ export async function xuatBangDiemPhongExcel(
       };
     }
   });
+
+  // --- Chân trang ký tên (góc dưới bên phải, không kẻ khung) ---
+  // Chừa 1 dòng trống sau lưới danh sách rồi mới tới địa danh + ngày.
+  const dongNgay = DONG_HEADER + danhSach.length + 2;
+  const nay = new Date();
+  const hai = (n: number) => String(n).padStart(2, '0');
+
+  ws.mergeCells(`D${dongNgay}:F${dongNgay}`);
+  ws.getCell(`D${dongNgay}`).value =
+    `Tp.Hồ Chí Minh, ngày ${hai(nay.getDate())} tháng ${hai(nay.getMonth() + 1)} năm ${nay.getFullYear()}`;
+
+  const dongCanBo = dongNgay + 1;
+  ws.mergeCells(`D${dongCanBo}:F${dongCanBo}`);
+  ws.getCell(`D${dongCanBo}`).value = tenCanBo.trim()
+    ? `Cán bộ xuất bảng điểm: ${tenCanBo.trim()}`
+    : 'Cán bộ xuất bảng điểm:';
+
+  for (const dc of [`D${dongNgay}`, `D${dongCanBo}`]) {
+    ws.getCell(dc).font = {
+      name: FONT,
+      size: 12,
+      bold: dc === `D${dongCanBo}`,
+    };
+    ws.getCell(dc).alignment = { horizontal: 'center', vertical: 'middle' };
+  }
+  // Chừa 3 dòng trống bên dưới làm chỗ ký tên.
+  ws.getRow(dongCanBo + 3).height = 15;
 
   // --- Tải file ---
   const buffer = await wb.xlsx.writeBuffer();

@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import { resultsApi } from '@/api/results.api';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
+import { useAppSelector } from '@/store/hooks';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
@@ -27,6 +28,8 @@ export default function ResultRoomScorePage() {
   const { page, limit, setPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
+  // Người đang đăng nhập -> "Cán bộ xuất bảng điểm" ở chân biểu mẫu.
+  const nguoiDung = useAppSelector((s) => s.auth.user);
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [items, setItems] = useState<BangDiemPhongItem[]>([]);
@@ -81,7 +84,10 @@ export default function ResultRoomScorePage() {
     setDangXuat(true);
     try {
       const ds = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
-      await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, khoa);
+      await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, {
+        khoa,
+        tenCanBo: nguoiDung?.tenNguoiDung,
+      });
       localStorage.setItem(KHOA_KEY, khoa.trim());
       setMoHopXuat(false);
     } catch (err) {
