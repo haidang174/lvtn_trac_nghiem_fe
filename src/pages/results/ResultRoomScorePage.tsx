@@ -4,16 +4,24 @@ import PageHeader from '@/components/common/PageHeader';
 import Table, { type ColumnDef } from '@/components/common/Table';
 import Pagination from '@/components/common/Pagination';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { resultsApi } from '@/api/results.api';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
+import { useAuth } from '@/hooks/useAuth';
 import { usePagination } from '@/hooks/usePagination';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
+import { xuatBangDiemPhongExcel } from '@/utils/bangDiemPhongThi';
 import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
+import { VaiTro } from '@/enums/vaiTro';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
 import type { PhongThi } from '@/types/phong-thi.type';
+
+// Tên khoa hiếm khi đổi giữa các lần xuất -> nhớ lại cho lần sau.
+const KHOA_KEY = 'bangDiemPhong.khoa';
 
 export default function ResultRoomScorePage() {
   const { maPhongThi } = useParams();
@@ -21,12 +29,19 @@ export default function ResultRoomScorePage() {
   const { page, limit, setPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
+  // Người đang đăng nhập -> "Cán bộ xuất bảng điểm" ở chân biểu mẫu.
+  const { user } = useAuth();
+  // Bảng điểm in ra là văn bản chính thức -> chỉ Admin được xuất (GV vẫn xem được bảng).
+  const laAdmin = user?.vaiTro === VaiTro.QUAN_TRI_VIEN;
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [items, setItems] = useState<BangDiemPhongItem[]>([]);
   const [total, setTotal] = useState(0);
   const [thongKe, setThongKe] = useState<ThongKeKetQua | null>(null);
   const [dangTai, setDangTai] = useState(false);
+  const [dangXuat, setDangXuat] = useState(false);
+  const [moHopXuat, setMoHopXuat] = useState(false);
+  const [khoa, setKhoa] = useState(() => localStorage.getItem(KHOA_KEY) ?? '');
 
   // Nạp thông tin phòng cho tiêu đề.
   useEffect(() => {
@@ -64,6 +79,26 @@ export default function ResultRoomScorePage() {
     ? phong.trangThai === TrangThaiPhongThi.DA_DONG ||
       new Date() >= new Date(phong.dongLuc)
     : false;
+
+  // Xuất Excel theo mẫu của trường: tải lại TOÀN BỘ danh sách (không chỉ trang
+  // đang xem) rồi dựng file ngay tại trình duyệt.
+  const xuLyXuatExcel = async () => {
+    if (!phong) return;
+    setDangXuat(true);
+    try {
+      const ds = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
+      await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, {
+        khoa,
+        tenCanBo: user?.tenNguoiDung,
+      });
+      localStorage.setItem(KHOA_KEY, khoa.trim());
+      setMoHopXuat(false);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangXuat(false);
+    }
+  };
 
   const columns: ColumnDef<BangDiemPhongItem>[] = [
     {
@@ -141,7 +176,54 @@ export default function ResultRoomScorePage() {
         </Button>
       </div>
 
-      <PageHeader tieuDe={tieuDe} moTa={moTa} />
+      <PageHeader
+        tieuDe={tieuDe}
+        moTa={moTa}
+        hanhDong={
+          laAdmin ? (
+            <Button
+              variant="outline"
+              type="button"
+              disabled={!phong || dangXuat || total === 0}
+              onClick={() => setMoHopXuat(true)}
+            >
+              Xuất Excel
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/* Hỏi tên khoa trước khi xuất (mẫu của trường có dòng "KHOA:"). */}
+      {laAdmin && (
+        <Modal
+          moRa={moHopXuat}
+          onDong={() => setMoHopXuat(false)}
+          tieuDe="Xuất bảng điểm ra Excel"
+          kichThuoc="sm"
+          chanDuoi={
+            <>
+              <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
+                Hủy
+              </Button>
+              <Button type="button" disabled={dangXuat} onClick={xuLyXuatExcel}>
+                {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
+              </Button>
+            </>
+          }
+        >
+          <Input
+            name="khoa"
+            label="Khoa"
+            value={khoa}
+            placeholder="VD: Công nghệ Thông tin"
+            autoFocus
+            onChange={(e) => setKhoa(e.target.value)}
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Điền vào dòng "KHOA:" trên biểu mẫu. Để trống nếu muốn ghi tay sau khi in.
+          </p>
+        </Modal>
+      )}
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">

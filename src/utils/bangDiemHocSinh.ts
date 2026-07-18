@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import { formatScore } from '@/utils/formatScore';
 import { formatDateTime } from '@/utils/formatDate';
+import { slugTen } from '@/utils/slugTen';
 import { NHAN_TRANG_THAI_BAI_LAM } from '@/enums/trangThaiBaiLam';
 import type { KetQuaCuaToi } from '@/types/ket-qua.type';
 
@@ -32,18 +33,6 @@ export function gomTheoMon(items: KetQuaCuaToi[]): NhomMon[] {
       diemTB,
     };
   });
-}
-
-// Bỏ dấu tiếng Việt + thay khoảng trắng bằng '-' để làm tên file an toàn.
-function slugTen(ten: string): string {
-  return ten
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase();
 }
 
 const TIEU_DE_COT = [
