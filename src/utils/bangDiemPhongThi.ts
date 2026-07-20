@@ -13,6 +13,13 @@ function tachHoTen(hoTen: string): { hoDem: string; ten: string } {
   return { hoDem: s.slice(0, i), ten: s.slice(i + 1) };
 }
 
+// MSSV không được lưu riêng trong DB — email trường có dạng <mssv>@... nên lấy
+// phần trước dấu @ làm MSSV.
+function mssvTuEmail(email?: string | null): string {
+  if (!email) return '';
+  return email.split('@')[0] ?? '';
+}
+
 const FONT = 'Times New Roman';
 const VIEN_MONG: Partial<ExcelJS.Borders> = {
   top: { style: 'thin' },
@@ -23,7 +30,7 @@ const VIEN_MONG: Partial<ExcelJS.Borders> = {
 
 // Xuất bảng điểm của 1 phòng thi ra .xlsx theo đúng biểu mẫu của trường:
 // tiêu đề trường/quốc hiệu, "BẢNG ĐIỂM THI MÔN", tên môn + tên phòng, rồi bảng
-// TT | Email | Họ đệm | Tên | Điểm | Ghi chú (có khung viền, in được ngay).
+// TT | MSSV | Email | Họ đệm | Tên | Điểm | Ghi chú (có khung viền, in được ngay).
 // Danh sách gồm MỌI học sinh được gán vào phòng, em chưa thi để trống ô điểm.
 // `khoa` do người dùng nhập lúc xuất, `tenCanBo` là người đang đăng nhập —
 // để trống thì phần tương ứng chỉ in nhãn cho ghi tay.
@@ -47,6 +54,7 @@ export async function xuatBangDiemPhongExcel(
   const ws = wb.addWorksheet('Bảng điểm');
   ws.columns = [
     { width: 6 },
+    { width: 14 },
     { width: 26 },
     { width: 22 },
     { width: 12 },
@@ -57,12 +65,12 @@ export async function xuatBangDiemPhongExcel(
   // --- Phần đầu: trường / quốc hiệu ---
   ws.mergeCells('A1:C1');
   ws.getCell('A1').value = 'TRƯỜNG ĐẠI HỌC CÔNG NGHỆ SÀI GÒN';
-  ws.mergeCells('D1:F1');
+  ws.mergeCells('D1:G1');
   ws.getCell('D1').value = 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
 
   ws.mergeCells('A2:C2');
   ws.getCell('A2').value = khoa.trim() ? `KHOA: ${khoa.trim()}` : 'KHOA:';
-  ws.mergeCells('D2:F2');
+  ws.mergeCells('D2:G2');
   ws.getCell('D2').value = 'Độc lập - Tự do - Hạnh phúc';
 
   for (const dc of ['A1', 'D1', 'A2', 'D2']) {
@@ -70,8 +78,8 @@ export async function xuatBangDiemPhongExcel(
     ws.getCell(dc).alignment = { horizontal: 'center', vertical: 'middle' };
   }
 
-  ws.mergeCells('A4:F4');
-  ws.getCell('A4').value = 'BẢNG ĐIỂM THI MÔN';
+  ws.mergeCells('A4:G4');
+  ws.getCell('A4').value = 'BẢNG ĐIỂM THI';
   ws.getCell('A4').font = { name: FONT, size: 14, bold: true };
   ws.getCell('A4').alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -92,10 +100,18 @@ export async function xuatBangDiemPhongExcel(
   // --- Header bảng (dòng 9) ---
   const DONG_HEADER = 9;
   const header = ws.getRow(DONG_HEADER);
-  header.values = ['TT', 'Email', 'Họ và tên HS-SV', '', 'Điểm', 'Ghi chú'];
-  ws.mergeCells(`C${DONG_HEADER}:D${DONG_HEADER}`);
+  header.values = [
+    'TT',
+    'MSSV',
+    'Email',
+    'Họ và tên HS-SV',
+    '',
+    'Điểm',
+    'Ghi chú',
+  ];
+  ws.mergeCells(`D${DONG_HEADER}:E${DONG_HEADER}`);
   header.height = 30;
-  for (let c = 1; c <= 6; c++) {
+  for (let c = 1; c <= 7; c++) {
     const cell = header.getCell(c);
     cell.font = { name: FONT, size: 12, bold: true };
     cell.alignment = {
@@ -109,27 +125,26 @@ export async function xuatBangDiemPhongExcel(
   // --- Dữ liệu ---
   danhSach.forEach((r, i) => {
     const row = ws.getRow(DONG_HEADER + 1 + i);
-    // Chưa thi: ô điểm để trống, ghi chú nói rõ bỏ thi / chưa thi.
-    const ghiChu = r.daThi
-      ? `Đúng ${r.soCauDung}/${r.tongSoCau}`
-      : phongDaDong
-        ? 'Bỏ thi'
-        : 'Chưa thi';
+    // Ghi chú chỉ dùng cho trường hợp vắng: chưa thi thì ô điểm để trống và ghi
+    // rõ bỏ thi / chưa thi. Em đã thi để trống ghi chú (điểm đã ở cột Điểm).
+    const ghiChu = r.daThi ? '' : phongDaDong ? 'Bỏ thi' : 'Chưa thi';
     row.values = [
       i + 1,
+      mssvTuEmail(r.email),
       r.email ?? '',
       r.hoDem,
       r.ten,
       r.daThi ? Math.round(Number(r.diemSo) * 100) / 100 : '',
       ghiChu,
     ];
-    for (let c = 1; c <= 6; c++) {
+    for (let c = 1; c <= 7; c++) {
       const cell = row.getCell(c);
       cell.font = { name: FONT, size: 12 };
       cell.border = VIEN_MONG;
-      // TT, Điểm căn giữa; Ghi chú căn giữa cho gọn; còn lại căn trái.
+      // TT, MSSV, Điểm căn giữa; Ghi chú căn giữa cho gọn; còn lại căn trái.
       cell.alignment = {
-        horizontal: c === 1 || c === 5 || c === 6 ? 'center' : 'left',
+        horizontal:
+          c === 1 || c === 2 || c === 6 || c === 7 ? 'center' : 'left',
         vertical: 'middle',
       };
     }
@@ -141,21 +156,21 @@ export async function xuatBangDiemPhongExcel(
   const nay = new Date();
   const hai = (n: number) => String(n).padStart(2, '0');
 
-  ws.mergeCells(`D${dongNgay}:F${dongNgay}`);
-  ws.getCell(`D${dongNgay}`).value =
+  ws.mergeCells(`E${dongNgay}:G${dongNgay}`);
+  ws.getCell(`E${dongNgay}`).value =
     `Tp.Hồ Chí Minh, ngày ${hai(nay.getDate())} tháng ${hai(nay.getMonth() + 1)} năm ${nay.getFullYear()}`;
 
   const dongCanBo = dongNgay + 1;
-  ws.mergeCells(`D${dongCanBo}:F${dongCanBo}`);
-  ws.getCell(`D${dongCanBo}`).value = tenCanBo.trim()
+  ws.mergeCells(`E${dongCanBo}:G${dongCanBo}`);
+  ws.getCell(`E${dongCanBo}`).value = tenCanBo.trim()
     ? `Cán bộ xuất bảng điểm: ${tenCanBo.trim()}`
     : 'Cán bộ xuất bảng điểm:';
 
-  for (const dc of [`D${dongNgay}`, `D${dongCanBo}`]) {
+  for (const dc of [`E${dongNgay}`, `E${dongCanBo}`]) {
     ws.getCell(dc).font = {
       name: FONT,
       size: 12,
-      bold: dc === `D${dongCanBo}`,
+      bold: dc === `E${dongCanBo}`,
     };
     ws.getCell(dc).alignment = { horizontal: 'center', vertical: 'middle' };
   }
