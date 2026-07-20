@@ -127,16 +127,16 @@ export default function ResultListPage() {
 
       {/* Bộ lọc */}
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Input
+            placeholder="Tìm theo tên phòng..."
+            value={timKiem}
+            onChange={(e) => setTimKiem(e.target.value)}
+        />
         <Select
           placeholder="-- Tất cả môn học --"
           value={locMon}
           onChange={(e) => setLocMon(e.target.value)}
           options={monHocs.map((m) => ({ value: m.maMonHoc, label: m.tenMonHoc }))}
-        />
-        <Input
-          placeholder="Tìm theo tên phòng..."
-          value={timKiem}
-          onChange={(e) => setTimKiem(e.target.value)}
         />
       </div>
 
