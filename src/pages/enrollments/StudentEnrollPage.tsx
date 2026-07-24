@@ -3,6 +3,7 @@ import PageHeader from '@/components/common/PageHeader';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { enrollmentsApi, type MonKhaDung } from '@/api/enrollments.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
@@ -14,6 +15,8 @@ export default function StudentEnrollPage() {
   const [dangTai, setDangTai] = useState(true);
   const [dangXuLy, setDangXuLy] = useState<number | null>(null);
   const [tuKhoa, setTuKhoa] = useState('');
+  // Môn đang chờ xác nhận hủy đăng ký (mở hộp thoại xác nhận).
+  const [chonHuy, setChonHuy] = useState<MonKhaDung | null>(null);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
@@ -44,11 +47,13 @@ export default function StudentEnrollPage() {
     }
   };
 
-  const huyDangKy = async (m: MonKhaDung) => {
-    setDangXuLy(m.maMonHocHocKy);
+  const xacNhanHuy = async () => {
+    if (!chonHuy) return;
+    setDangXuLy(chonHuy.maMonHocHocKy);
     try {
-      await enrollmentsApi.unregister(m.maMonHocHocKy);
+      await enrollmentsApi.unregister(chonHuy.maMonHocHocKy);
       toast.success('Đã hủy đăng ký môn học');
+      setChonHuy(null);
       taiDuLieu();
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
@@ -119,7 +124,7 @@ export default function StudentEnrollPage() {
                   fullWidth
                   className="mt-auto"
                   dangTai={dangXuLy === m.maMonHocHocKy}
-                  onClick={() => huyDangKy(m)}
+                  onClick={() => setChonHuy(m)}
                 >
                   Hủy đăng ký
                 </Button>
@@ -138,6 +143,18 @@ export default function StudentEnrollPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        moRa={!!chonHuy}
+        tieuDe="Hủy đăng ký môn học"
+        noiDung={`Bạn có chắc muốn hủy đăng ký môn "${chonHuy?.monHoc?.tenMonHoc ?? ''}"?`}
+        nhanXacNhan="Hủy đăng ký"
+        nhanHuy="Quay lại"
+        nguyHiem
+        dangXuLy={dangXuLy === chonHuy?.maMonHocHocKy}
+        onXacNhan={xacNhanHuy}
+        onHuy={() => setChonHuy(null)}
+      />
     </div>
   );
 }

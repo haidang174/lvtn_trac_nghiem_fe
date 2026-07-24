@@ -135,7 +135,7 @@ export default function UserListPage() {
             className="!px-2 !py-1"
             onClick={() => setFormUser(u)}
           >
-            ✏️ Sửa
+            Sửa
           </Button>
           <Button
             variant="ghost"
@@ -143,7 +143,7 @@ export default function UserListPage() {
             className="!px-2 !py-1"
             onClick={() => setChonDoiTrangThai(u)}
           >
-            {u.laHoatDong ? '🔒 Khóa' : '🔓 Mở'}
+            {u.laHoatDong ? 'Khóa' : 'Mở'}
           </Button>
           <Button
             variant="ghost"
@@ -151,7 +151,7 @@ export default function UserListPage() {
             className="!px-2 !py-1 text-red-600 hover:bg-red-50"
             onClick={() => setChonXoa(u)}
           >
-            🗑️ Xóa
+            Xóa
           </Button>
         </div>
       ),

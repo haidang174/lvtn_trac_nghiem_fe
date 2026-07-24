@@ -286,7 +286,7 @@ export default function ExamFormPage() {
       <form onSubmit={xuLyLuu} className="space-y-5">
         {daKhoa && (
           <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            🔒 Đề thi đã được dùng để tạo phòng thi hoặc đã có học sinh làm bài nên không thể
+            ⚠️ Đề thi đã được dùng để tạo phòng thi hoặc đã có học sinh làm bài nên không thể
             chỉnh sửa. Hãy tạo một đề thi mới nếu cần thay đổi.
           </p>
         )}

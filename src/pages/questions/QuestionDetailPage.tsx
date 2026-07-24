@@ -84,7 +84,7 @@ export default function QuestionDetailPage() {
             </Button>
             {laGiaoVien && (
               <Button type="button" onClick={() => navigate(`/questions/${ch.maCauHoi}/edit`)}>
-                ✏️ Sửa
+                Sửa
               </Button>
             )}
           </>
@@ -120,7 +120,7 @@ export default function QuestionDetailPage() {
           <h3 className="text-sm font-semibold text-gray-700">Các lựa chọn</h3>
           {!coDanhDauDapAn && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              ⚠️ API chi tiết hiện chưa trả về đáp án đúng nên không thể đánh dấu ở đây.
+              API chi tiết hiện chưa trả về đáp án đúng nên không thể đánh dấu ở đây.
             </p>
           )}
           <ul className="space-y-2">

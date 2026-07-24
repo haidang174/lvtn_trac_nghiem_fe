@@ -26,7 +26,6 @@ export default function Sidebar({ moRa, onDong }: Props) {
       >
         {/* Thương hiệu */}
         <div className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-100 px-5">
-          <span className="text-2xl">🧠</span>
           <span className="text-lg font-bold text-primary">Trắc Nghiệm</span>
         </div>
 
