@@ -131,7 +131,7 @@ export default function ResultHistoryPage() {
             className="text-xs text-gray-400"
             title="Chi tiết bài làm chỉ xem được sau khi phòng thi đóng"
           >
-            🔒 Mở khi phòng đóng
+            Mở khi phòng đóng
           </span>
         );
       },

@@ -155,8 +155,7 @@ export default function ExamTakingPage() {
     return (
       <div className="mx-auto max-w-md py-10 text-center">
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <span className="text-6xl">{ketQua ? '🎉' : '⏰'}</span>
-          <h1 className="mt-3 text-xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             {ketQua ? 'Đã nộp bài!' : 'Bài thi đã kết thúc'}
           </h1>
           {ketQua ? (

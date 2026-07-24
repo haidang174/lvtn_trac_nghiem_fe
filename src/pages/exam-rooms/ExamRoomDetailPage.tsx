@@ -138,7 +138,7 @@ export default function ExamRoomDetailPage() {
                 type="button"
                 onClick={() => navigate(`/exam-rooms/${phong.maPhongThi}/edit`)}
               >
-                ✏️ Sửa
+                Sửa
               </Button>
             )}
             <Button variant="secondary" type="button" onClick={() => navigate('/exam-rooms')}>

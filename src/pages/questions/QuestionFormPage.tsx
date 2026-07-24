@@ -326,7 +326,7 @@ export default function QuestionFormPage() {
 
           {canChonLaiDapAn && (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              ⚠️ Hệ thống chưa trả về đáp án đúng cũ — vui lòng chọn lại đáp án đúng trước khi lưu.
+              Hệ thống chưa trả về đáp án đúng cũ — vui lòng chọn lại đáp án đúng trước khi lưu.
             </p>
           )}
 
@@ -359,7 +359,7 @@ export default function QuestionFormPage() {
                   className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30"
                   title="Xóa lựa chọn"
                 >
-                  🗑️
+                  Xóa
                 </button>
               </div>
               {/* Xem trước chỉ hiện khi lựa chọn có chứa công thức LaTeX. */}

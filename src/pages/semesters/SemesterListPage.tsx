@@ -92,7 +92,7 @@ export default function SemesterListPage() {
               className="!px-2 !py-1"
               onClick={() => setFormHocKy(h)}
             >
-              ✏️ Sửa
+              Sửa
             </Button>
           )}
         </div>

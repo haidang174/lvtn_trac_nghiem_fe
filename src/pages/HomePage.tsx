@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark p-6 text-white shadow">
-        <h1 className="text-2xl font-bold">Xin chào, {user.tenNguoiDung} 👋</h1>
+        <h1 className="text-2xl font-bold">Xin chào, {user.tenNguoiDung}</h1>
         <p className="mt-1 text-white/80">
           {NHAN_VAI_TRO[user.vaiTro]} · {user.email}
         </p>

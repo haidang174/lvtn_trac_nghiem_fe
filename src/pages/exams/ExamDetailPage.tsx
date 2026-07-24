@@ -79,7 +79,7 @@ export default function ExamDetailPage() {
             </Button>
             {laGiaoVien && (
               <Button type="button" onClick={() => navigate(`/exams/${bt.maBaiThi}/edit`)}>
-                ✏️ Sửa
+                Sửa
               </Button>
             )}
           </>

@@ -140,7 +140,7 @@ export default function QuestionListPage() {
                   className="!px-2 !py-1"
                   onClick={() => navigate(`/questions/${q.maCauHoi}/edit`)}
                 >
-                  ✏️ Sửa
+                  Sửa
                 </Button>
                 <Button
                   variant="ghost"
@@ -148,7 +148,7 @@ export default function QuestionListPage() {
                   className="!px-2 !py-1 text-red-600 hover:bg-red-50"
                   onClick={() => setChonXoa(q)}
                 >
-                  🗑️ Xóa
+                  Xóa
                 </Button>
               </div>
             ),

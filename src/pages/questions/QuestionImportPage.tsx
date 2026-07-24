@@ -317,7 +317,7 @@ export default function QuestionImportPage() {
                   className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50"
                   title="Xóa câu hỏi này"
                 >
-                  🗑️ Xóa câu
+                  Xóa câu
                 </button>
               </div>
 
@@ -391,7 +391,7 @@ export default function QuestionImportPage() {
                       className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30"
                       title="Xóa lựa chọn"
                     >
-                      🗑️
+                      Xóa
                     </button>
                   </div>
                 ))}

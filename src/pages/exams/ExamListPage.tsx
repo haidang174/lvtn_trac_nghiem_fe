@@ -145,7 +145,7 @@ export default function ExamListPage() {
               className="!px-2 !py-1"
               onClick={() => navigate(`/exams/${bt.maBaiThi}/edit`)}
             >
-              ✏️ Sửa
+              Sửa
             </Button>
             <Button
               variant="ghost"
@@ -153,7 +153,7 @@ export default function ExamListPage() {
               className="!px-2 !py-1"
               onClick={() => doiTrangThai(bt)}
             >
-              {bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? '🔒 Ẩn' : '📢 Công khai'}
+              {bt.trangThai === TrangThaiBaiThi.CONG_KHAI ? 'Ẩn' : 'Công khai'}
             </Button>
             <Button
               variant="ghost"
@@ -161,7 +161,7 @@ export default function ExamListPage() {
               className="!px-2 !py-1 text-red-600 hover:bg-red-50"
               onClick={() => setChonXoa(bt)}
             >
-              🗑️ Xóa
+              Xóa
             </Button>
           </div>
         ) : (

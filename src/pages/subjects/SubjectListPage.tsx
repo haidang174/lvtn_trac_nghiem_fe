@@ -122,7 +122,7 @@ export default function SubjectListPage() {
             className="!px-2 !py-1"
             onClick={() => setFormMonHoc(m)}
           >
-            ✏️ Sửa
+            Sửa
           </Button>
           <Button
             variant="ghost"
@@ -130,7 +130,7 @@ export default function SubjectListPage() {
             className="!px-2 !py-1"
             onClick={() => doiTrangThai(m)}
           >
-            {m.laHoatDong ? '🔒 Khóa' : '🔓 Mở'}
+            {m.laHoatDong ? 'Khóa' : 'Mở'}
           </Button>
           <Button
             variant="ghost"
@@ -138,7 +138,7 @@ export default function SubjectListPage() {
             className="!px-2 !py-1 text-red-600 hover:bg-red-50"
             onClick={() => setChonXoa(m)}
           >
-            🗑️ Xóa
+            Xóa
           </Button>
         </div>
       ),
