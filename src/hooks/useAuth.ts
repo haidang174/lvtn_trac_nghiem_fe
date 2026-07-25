@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authApi, type LoginPayload, type RegisterPayload } from '@/api/auth.api';
 import { datUser, dangXuat as dangXuatAction } from '@/store/slices/auth.slice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -7,6 +8,7 @@ import { tokenStorage } from '@/utils/token';
 // Hook tiện ích cho luồng xác thực: trạng thái user + login/register/logout.
 export function useAuth() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { user, daXacThuc, dangKhoiPhuc } = useAppSelector((s) => s.auth);
 
   const login = useCallback(
@@ -38,7 +40,9 @@ export function useAuth() {
       // Bỏ qua lỗi mạng khi đăng xuất; vẫn xóa phiên phía client.
     }
     dispatch(dangXuatAction());
-  }, [dispatch]);
+    // Điều hướng tường minh về trang đăng nhập
+    navigate('/login', { replace: true });
+  }, [dispatch, navigate]);
 
   return { user, daXacThuc, dangKhoiPhuc, login, register, logout };
 }

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,8 +13,6 @@ export default function LoginPage() {
   const { login } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
-  const tuTrang = (location.state as { from?: Location })?.from?.pathname ?? '/';
 
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
@@ -26,7 +24,7 @@ export default function LoginPage() {
     try {
       await login({ email, matKhau });
       dispatch(themToast('success', 'Đăng nhập thành công'));
-      navigate(tuTrang, { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       dispatch(themToast('error', chuanHoaLoi(err).message));
     } finally {
