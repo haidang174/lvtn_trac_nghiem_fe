@@ -12,9 +12,11 @@ import { formatScore } from '@/utils/formatScore';
 import type { KetQuaChiTiet, LuaChonKetQua } from '@/types/ket-qua.type';
 
 // Màu nền cho lựa chọn theo trạng thái đúng/sai/đã chọn.
-function lopLuaChon(lc: LuaChonKetQua): string {
+// Với HS không có `laDapAnDung` nên ô đã chọn tô theo kết quả của cả câu (`cauDung`).
+function lopLuaChon(lc: LuaChonKetQua, cauDung: boolean): string {
   if (lc.laDapAnDung) return 'border-green-300 bg-green-50';
-  if (lc.daChon) return 'border-red-300 bg-red-50';
+  if (lc.daChon)
+    return cauDung ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50';
   return 'border-gray-200';
 }
 
@@ -170,7 +172,7 @@ export default function ResultDetailPage() {
               {cauHienTai.luaChons.map((lc, j) => (
                 <li
                   key={lc.maLuaChon}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${lopLuaChon(lc)}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${lopLuaChon(lc, cauHienTai.dung)}`}
                 >
                   <span className="font-medium text-gray-500">{String.fromCharCode(65 + j)}.</span>
                   <span className="flex-1 text-gray-800">

@@ -39,10 +39,11 @@ export interface BangDiemPhongItem {
 }
 
 // Lựa chọn trong chi tiết kết quả (kèm đáp án đúng + đã chọn).
+// HS KHÔNG nhận `laDapAnDung` (BE ẩn đáp án đúng với vai trò HS), chỉ GV/Admin có.
 export interface LuaChonKetQua {
   maLuaChon: number;
   noiDung: string;
-  laDapAnDung: boolean;
+  laDapAnDung?: boolean;
   daChon: boolean;
 }
 
