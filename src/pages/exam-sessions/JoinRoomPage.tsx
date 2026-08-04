@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
 import StatusBadge from '@/components/common/StatusBadge';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { examSessionsApi } from '@/api/examSessions.api';
@@ -20,6 +21,8 @@ export default function JoinRoomPage() {
   const [rooms, setRooms] = useState<PhongThi[]>([]);
   const [dangTai, setDangTai] = useState(true);
   const [dangVao, setDangVao] = useState<number | null>(null);
+  const [ma, setMa] = useState('');
+  const [dangThamGia, setDangThamGia] = useState(false);
 
   const taiDuLieu = useCallback(async () => {
     setDangTai(true);
@@ -37,6 +40,28 @@ export default function JoinRoomPage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
+  // Nhập mã tham gia: chỉ thêm mình vào phòng rồi tải lại danh sách — phòng có
+  // thể chưa tới giờ mở nên không điều hướng thẳng vào bài thi.
+  const xuLyNhapMa = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!ma.trim()) return toast.error('Vui lòng nhập mã tham gia');
+    setDangThamGia(true);
+    try {
+      const kq = await examRoomsApi.joinByCode(ma.trim());
+      toast.success(
+        kq.daThamGiaTruocDo
+          ? `Bạn đã ở trong phòng "${kq.tenPhongThi}"`
+          : `Đã tham gia phòng "${kq.tenPhongThi}"`,
+      );
+      setMa('');
+      await taiDuLieu();
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangThamGia(false);
+    }
+  };
+
   const vaoThi = async (phong: PhongThi) => {
     setDangVao(phong.maPhongThi);
     try {
@@ -53,7 +78,7 @@ export default function JoinRoomPage() {
     <div>
       <PageHeader
         tieuDe="Danh sách phòng thi"
-        moTa="Các phòng thi bạn được phân công vào"
+        moTa="Phòng thi bạn được phân công hoặc đã tham gia bằng mã"
         hanhDong={
           <Button variant="ghost" type="button" onClick={taiDuLieu}>
             🔄 Làm mới
@@ -61,16 +86,42 @@ export default function JoinRoomPage() {
         }
       />
 
+      <form
+        onSubmit={xuLyNhapMa}
+        className="mb-5 rounded-xl border border-gray-200 bg-white p-4"
+      >
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Tham gia bằng mã
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={ma}
+            maxLength={8}
+            className="font-mono uppercase tracking-widest"
+            placeholder="VD: K7M2QP"
+            onChange={(e) => setMa(e.target.value.toUpperCase())}
+          />
+          <Button type="submit" dangTai={dangThamGia} className="sm:w-40">
+            Tham gia
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Nhập mã do giáo viên/quản trị cung cấp. Bạn phải đã đăng ký môn học
+          của phòng thi đó.
+        </p>
+      </form>
+
       {dangTai ? (
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
       ) : rooms.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500">
-          Chưa có phòng thi nào. Hãy liên hệ giáo viên/quản trị nếu bạn cần được phân công vào phòng.
+          Chưa có phòng thi nào. Hãy nhập mã tham gia ở trên, hoặc liên hệ giáo
+          viên/quản trị nếu bạn cần được phân công vào phòng.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
           {rooms.map((p) => {
             const coTheVao = p.trangThai !== TrangThaiPhongThi.DA_DONG;
             return (

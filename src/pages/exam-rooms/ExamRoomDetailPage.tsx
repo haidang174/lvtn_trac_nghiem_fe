@@ -10,6 +10,7 @@ import { chuanHoaLoi } from '@/api/axiosClient';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
+import { HinhThucThamGia, NHAN_HINH_THUC_THAM_GIA } from '@/enums/hinhThucThamGia';
 import { TrangThaiPhongThi, NHAN_TRANG_THAI_PHONG_THI } from '@/enums/trangThaiPhongThi';
 import { TrangThaiThanhVien, NHAN_TRANG_THAI_THANH_VIEN } from '@/enums/trangThaiThanhVien';
 import { mauTrangThaiPhong } from './ExamRoomListPage';
@@ -70,6 +71,15 @@ export default function ExamRoomDetailPage() {
       toast.error(chuanHoaLoi(err).message);
     } finally {
       setDangDoi(false);
+    }
+  };
+
+  const saoChepMa = async (ma: string) => {
+    try {
+      await navigator.clipboard.writeText(ma);
+      toast.success('Đã sao chép mã tham gia');
+    } catch {
+      toast.error('Trình duyệt không cho phép sao chép, vui lòng chép tay');
     }
   };
 
@@ -181,6 +191,13 @@ export default function ExamRoomDetailPage() {
               nhan="Chế độ câu hỏi"
               giaTri={NHAN_CHE_DO_CAU_HOI[phong.cheDoCauHoi] ?? phong.cheDoCauHoi}
             />
+            <Info
+              nhan="Hình thức tham gia"
+              giaTri={
+                NHAN_HINH_THUC_THAM_GIA[phong.hinhThucThamGia] ??
+                phong.hinhThucThamGia
+              }
+            />
             <Info nhan="Thời lượng" giaTri={`${phong.thoiGianLamBai} phút`} />
             <Info nhan="Mở lúc" giaTri={formatDateTime(phong.moLuc)} />
             <Info nhan="Đóng lúc" giaTri={formatDateTime(phong.dongLuc)} />
@@ -193,6 +210,33 @@ export default function ExamRoomDetailPage() {
               </dd>
             </div>
           </dl>
+
+          {phong.hinhThucThamGia === HinhThucThamGia.MA_THAM_GIA && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <p className="text-sm text-gray-500">Mã tham gia</p>
+                  <p className="font-mono text-2xl font-semibold tracking-widest text-gray-800">
+                    {phong.maThamGia ?? '—'}
+                  </p>
+                </div>
+                {phong.maThamGia && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="self-end"
+                    onClick={() => saoChepMa(phong.maThamGia!)}
+                  >
+                    Sao chép
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Học sinh đã ghi danh môn học này nhập mã ở trang "Phòng thi" để
+                tự vào phòng.
+              </p>
+            </div>
+          )}
 
           {buocTiep.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
@@ -229,7 +273,11 @@ export default function ExamRoomDetailPage() {
         columns={cotThanhVien}
         data={thanhViens}
         rowKey={(t) => t.maHocSinh}
-        rong="Chưa gán học sinh nào vào phòng"
+        rong={
+          phong.hinhThucThamGia === HinhThucThamGia.MA_THAM_GIA
+            ? 'Chưa có học sinh nào nhập mã tham gia'
+            : 'Chưa gán học sinh nào vào phòng'
+        }
       />
     </div>
   );

@@ -2,16 +2,29 @@ import axiosClient from './axiosClient';
 import type { PhongThi, ThanhVienPhong } from '@/types/phong-thi.type';
 import type { PaginatedData, PaginationParams } from '@/types/api-response.type';
 import type { CheDoCauHoi } from '@/enums/cheDoCauHoi';
+import type { HinhThucThamGia } from '@/enums/hinhThucThamGia';
 import type { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 
 export interface CreateExamRoomPayload {
   maMonHocHocKy: number;
   tenPhongThi: string;
   maBaiThis: number[];
-  maHocSinhs: number[]; // HS được gán vào phòng (bắt buộc).
+  hinhThucThamGia: HinhThucThamGia;
+  // Chỉ gửi khi hinhThucThamGia = GAN_HOC_SINH (chế độ mã: HS tự nhập mã).
+  maHocSinhs?: number[];
   cheDoCauHoi: CheDoCauHoi;
   thoiGianLamBai: number;
   moLuc: string; // ISO datetime; giờ đóng phòng = moLuc + thoiGianLamBai.
+}
+
+// Kết quả HS nhập mã tham gia — payload gọn, không kèm danh sách bạn cùng phòng.
+export interface KetQuaThamGiaBangMa {
+  maPhongThi: number;
+  tenPhongThi: string;
+  trangThai: TrangThaiPhongThi;
+  moLuc: string;
+  dongLuc: string;
+  daThamGiaTruocDo: boolean;
 }
 
 export type UpdateExamRoomPayload = Partial<CreateExamRoomPayload>;
@@ -30,7 +43,7 @@ export const examRoomsApi = {
       PaginatedData<PhongThi>
     >,
 
-  // Học sinh: phòng mình được Admin gán vào.
+  // Học sinh: phòng mình có mặt (Admin gán hoặc đã nhập mã tham gia).
   getAvailableRooms: () =>
     axiosClient.get('/exam-rooms/available') as unknown as Promise<{
       items: PhongThi[];
@@ -61,6 +74,12 @@ export const examRoomsApi = {
     axiosClient.patch(`/exam-rooms/${id}/status`, {
       trangThai,
     }) as unknown as Promise<PhongThi>,
+
+  // Học sinh: nhập mã tham gia để tự vào phòng.
+  joinByCode: (maThamGia: string) =>
+    axiosClient.post('/exam-rooms/join-by-code', {
+      maThamGia,
+    }) as unknown as Promise<KetQuaThamGiaBangMa>,
 
   deleteExamRoom: (id: number) =>
     axiosClient.delete(`/exam-rooms/${id}`) as unknown as Promise<null>,
