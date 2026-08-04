@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import { examRoomsApi } from '@/api/examRooms.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
@@ -33,6 +34,7 @@ export default function ExamRoomDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [thanhViens, setThanhViens] = useState<ThanhVienPhong[]>([]);
@@ -102,7 +104,10 @@ export default function ExamRoomDetailPage() {
     );
   }
 
-  const buocTiep = CHUYEN_TRANG_THAI[phong.trangThai];
+  // Sửa/đóng/xóa phòng chỉ dành cho người tạo (Admin cũng không can thiệp
+  // vào phòng của giáo viên và ngược lại).
+  const laNguoiTao = phong.taoBoi === user?.maNguoiDung;
+  const buocTiep = laNguoiTao ? CHUYEN_TRANG_THAI[phong.trangThai] : [];
   const dsDe = phong.phongThiBaiThis ?? [];
   const soCoMat = thanhViens.filter(
     (t) => t.trangThai !== TrangThaiThanhVien.VANG_MAT,
@@ -142,7 +147,7 @@ export default function ExamRoomDetailPage() {
         tieuDe={phong.tenPhongThi}
         hanhDong={
           <div className="flex gap-2">
-            {phong.trangThai === TrangThaiPhongThi.DANG_CHO && (
+            {phong.trangThai === TrangThaiPhongThi.DANG_CHO && laNguoiTao && (
               <Button
                 variant="secondary"
                 type="button"
@@ -187,6 +192,10 @@ export default function ExamRoomDetailPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
             <Info nhan="Môn học (học kỳ)" giaTri={tenMonKy} />
+            <Info
+              nhan="Người tạo"
+              giaTri={phong.nguoiTao?.tenNguoiDung ?? '—'}
+            />
             <Info
               nhan="Chế độ câu hỏi"
               giaTri={NHAN_CHE_DO_CAU_HOI[phong.cheDoCauHoi] ?? phong.cheDoCauHoi}

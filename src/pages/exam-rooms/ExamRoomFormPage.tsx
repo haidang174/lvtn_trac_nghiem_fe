@@ -10,7 +10,9 @@ import { examsApi } from '@/api/exams.api';
 import { subjectOfferingsApi } from '@/api/subjectOfferings.api';
 import { enrollmentsApi } from '@/api/enrollments.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { VaiTro } from '@/enums/vaiTro';
 import { localToISO, nowLocalInput, formatDateTime } from '@/utils/formatDate';
 import { CheDoCauHoi, NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
 import { HinhThucThamGia } from '@/enums/hinhThucThamGia';
@@ -24,6 +26,9 @@ export default function ExamRoomFormPage() {
   const laSua = !!id;
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  // GV chỉ mở được phòng dùng mã tham gia, không gán học sinh.
+  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [offerings, setOfferings] = useState<MonHocHocKy[]>([]);
   const [deCongKhai, setDeCongKhai] = useState<BaiThi[]>([]);
@@ -35,7 +40,7 @@ export default function ExamRoomFormPage() {
   const [maBaiThis, setMaBaiThis] = useState<number[]>([]);
   const [maHocSinhs, setMaHocSinhs] = useState<number[]>([]);
   const [hinhThuc, setHinhThuc] = useState<HinhThucThamGia>(
-    HinhThucThamGia.GAN_HOC_SINH,
+    laGiaoVien ? HinhThucThamGia.MA_THAM_GIA : HinhThucThamGia.GAN_HOC_SINH,
   );
   // Hình thức lúc nạp (chế độ sửa) — dùng để cảnh báo khi Admin đổi qua lại.
   const [hinhThucGoc, setHinhThucGoc] = useState<HinhThucThamGia | null>(null);
@@ -50,12 +55,19 @@ export default function ExamRoomFormPage() {
   const napDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const dsOffering = await subjectOfferingsApi.getOfferings({
-        page: 1,
-        limit: 1000,
-        laHoatDong: true,
-      });
-      setOfferings(dsOffering.items);
+      // GV không gọi được GET /subject-offerings (Admin-only) — dùng danh sách
+      // môn mình được phân dạy; endpoint đó không lọc laHoatDong nên lọc ở đây.
+      if (laGiaoVien) {
+        const dsDay = await subjectOfferingsApi.getMyTeaching();
+        setOfferings(dsDay.filter((o) => o.laHoatDong));
+      } else {
+        const dsOffering = await subjectOfferingsApi.getOfferings({
+          page: 1,
+          limit: 1000,
+          laHoatDong: true,
+        });
+        setOfferings(dsOffering.items);
+      }
 
       if (laSua && id) {
         const phong = await examRoomsApi.getExamRoomById(+id);
@@ -79,7 +91,7 @@ export default function ExamRoomFormPage() {
     } finally {
       setDangTai(false);
     }
-  }, [id, laSua, navigate, toast]);
+  }, [id, laSua, laGiaoVien, navigate, toast]);
 
   useEffect(() => {
     napDuLieu();
@@ -109,8 +121,9 @@ export default function ExamRoomFormPage() {
   }, [maMonHocHocKy, toast]);
 
   // Nạp danh sách HS đã ghi danh môn-học-kỳ + HS đã gán vào phòng khác (để ẩn).
+  // Chỉ Admin cần: 2 endpoint này đều Admin-only và GV không gán học sinh.
   useEffect(() => {
-    if (!maMonHocHocKy) {
+    if (!maMonHocHocKy || laGiaoVien) {
       setDsGhiDanh([]);
       setDaGanKhac([]);
       return;
@@ -133,7 +146,7 @@ export default function ExamRoomFormPage() {
     return () => {
       huy = true;
     };
-  }, [maMonHocHocKy, id, laSua, toast]);
+  }, [maMonHocHocKy, id, laSua, laGiaoVien, toast]);
 
   const dongLucTuTinh =
     moLuc && thoiGianLamBai
@@ -295,6 +308,12 @@ export default function ExamRoomFormPage() {
           )}
         </div>
 
+        {laGiaoVien ? (
+          <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+            Phòng của giáo viên dùng <strong>mã tham gia</strong>: học sinh đã
+            đăng ký môn này tự nhập mã để vào phòng.
+          </p>
+        ) : (
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Hình thức tham gia *
@@ -347,6 +366,7 @@ export default function ExamRoomFormPage() {
             </p>
           )}
         </div>
+        )}
 
         {laDungMa ? (
           <div>

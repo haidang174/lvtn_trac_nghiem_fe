@@ -47,6 +47,7 @@ export interface PhongThi {
   dongLuc: string;
   trangThai: TrangThaiPhongThi;
   monHocHocKy?: MonHocHocKy;
+  nguoiTao?: NguoiDung;
   phongThiBaiThis?: PhongThiBaiThi[];
   phongThiHocSinhs?: PhongThiHocSinh[];
   thanhViens?: ThanhVienPhong[];

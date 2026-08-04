@@ -12,8 +12,10 @@ import { examRoomsApi, type QueryExamRoomParams } from '@/api/examRooms.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
 import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
+import { VaiTro } from '@/enums/vaiTro';
 import { TrangThaiPhongThi, NHAN_TRANG_THAI_PHONG_THI } from '@/enums/trangThaiPhongThi';
 import type { PhongThi } from '@/types/phong-thi.type';
 
@@ -27,6 +29,10 @@ export default function ExamRoomListPage() {
   const { page, limit, setPage, resetPage } = usePagination();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  // Admin thấy mọi phòng nên cần biết ai tạo; quản lý thì chỉ người tạo mới được.
+  const laAdmin = user?.vaiTro === VaiTro.QUAN_TRI_VIEN;
+  const laNguoiTao = (p: PhongThi) => p.taoBoi === user?.maNguoiDung;
 
   const [tuKhoa, setTuKhoa] = useState('');
   const [locTrangThai, setLocTrangThai] = useState('');
@@ -98,6 +104,14 @@ export default function ExamRoomListPage() {
           ? `${p.monHocHocKy.monHoc?.tenMonHoc ?? ''} — ${p.monHocHocKy.hocKy?.tenHocKy ?? ''} ${p.monHocHocKy.hocKy?.namHoc ?? ''}`
           : '—',
     },
+    ...(laAdmin
+      ? [
+          {
+            tieuDe: 'Người tạo',
+            render: (p: PhongThi) => p.nguoiTao?.tenNguoiDung ?? '—',
+          },
+        ]
+      : []),
     { tieuDe: 'Mở lúc', render: (p) => formatDateTime(p.moLuc) },
     { tieuDe: 'Đóng lúc', render: (p) => formatDateTime(p.dongLuc) },
     {
@@ -121,7 +135,7 @@ export default function ExamRoomListPage() {
           >
             Chi tiết
           </Button>
-          {p.trangThai === TrangThaiPhongThi.DANG_CHO && (
+          {p.trangThai === TrangThaiPhongThi.DANG_CHO && laNguoiTao(p) && (
             <Button
               variant="ghost"
               type="button"
@@ -131,7 +145,7 @@ export default function ExamRoomListPage() {
               Sửa
             </Button>
           )}
-          {p.trangThai === TrangThaiPhongThi.DANG_CHO && (
+          {p.trangThai === TrangThaiPhongThi.DANG_CHO && laNguoiTao(p) && (
             <Button
               variant="ghost"
               type="button"
