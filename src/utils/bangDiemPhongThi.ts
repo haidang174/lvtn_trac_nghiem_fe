@@ -15,7 +15,7 @@ function tachHoTen(hoTen: string): { hoDem: string; ten: string } {
 
 // MSSV không được lưu riêng trong DB — email trường có dạng <mssv>@... nên lấy
 // phần trước dấu @ làm MSSV.
-function mssvTuEmail(email?: string | null): string {
+export function mssvTuEmail(email?: string | null): string {
   if (!email) return '';
   return email.split('@')[0] ?? '';
 }

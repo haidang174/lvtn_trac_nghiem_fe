@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
 import { xuatBangDiemPhongExcel } from '@/utils/bangDiemPhongThi';
+import { taiChiTietBaiLam, inVungBaiLam } from '@/utils/inBaiLam';
+import { slugTen } from '@/utils/slugTen';
+import BaiLamInAn, { type BaiLamIn } from '@/components/common/BaiLamInAn';
 import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 import { VaiTro } from '@/enums/vaiTro';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
@@ -42,6 +45,9 @@ export default function ResultRoomScorePage() {
   const [dangXuat, setDangXuat] = useState(false);
   const [moHopXuat, setMoHopXuat] = useState(false);
   const [khoa, setKhoa] = useState(() => localStorage.getItem(KHOA_KEY) ?? '');
+  // Bài làm đang chờ in (chỉ tồn tại trong lúc mở hộp thoại in).
+  const [dsIn, setDsIn] = useState<BaiLamIn[] | null>(null);
+  const [dangIn, setDangIn] = useState(false);
 
   // Nạp thông tin phòng cho tiêu đề.
   useEffect(() => {
@@ -103,6 +109,49 @@ export default function ResultRoomScorePage() {
     }
   };
 
+  // Xuất bài làm ra PDF bằng hộp thoại in của trình duyệt: dựng vùng in ẩn
+  // (BaiLamInAn) rồi gọi window.print(), người dùng chọn "Lưu thành PDF".
+  const inBaiLam = async (ds: BaiLamIn[], tenFile: string) => {
+    if (ds.length === 0) {
+      toast.error('Chưa có bài làm nào để xuất');
+      return;
+    }
+    setDsIn(ds);
+    try {
+      await inVungBaiLam(tenFile);
+    } finally {
+      setDsIn(null);
+    }
+  };
+
+  // Một học sinh: chỉ cần chi tiết của đúng em đó.
+  const xuLyInMotEm = async (row: BangDiemPhongItem) => {
+    setDangIn(true);
+    try {
+      const ds = await taiChiTietBaiLam([row]);
+      await inBaiLam(ds, `Bai-lam-${slugTen(row.tenNguoiDung ?? String(row.maNguoiDung))}`);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangIn(false);
+    }
+  };
+
+  // Cả phòng: tải lại TOÀN BỘ danh sách (không chỉ trang đang xem) như nút Excel.
+  const xuLyInCaPhong = async () => {
+    if (!phong) return;
+    setDangIn(true);
+    try {
+      const bangDiem = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
+      const ds = await taiChiTietBaiLam(bangDiem.items);
+      await inBaiLam(ds, `Bai-lam-phong-${slugTen(phong.tenPhongThi)}`);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangIn(false);
+    }
+  };
+
   const columns: ColumnDef<BangDiemPhongItem>[] = [
     {
       tieuDe: 'Học sinh',
@@ -147,14 +196,25 @@ export default function ResultRoomScorePage() {
       className: 'text-right',
       render: (r) =>
         r.daThi && r.maKetQua != null ? (
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1"
-            onClick={() => navigate(`/results/${r.maKetQua}`)}
-          >
-            Chi tiết
-          </Button>
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              onClick={() => navigate(`/results/${r.maKetQua}`)}
+            >
+              Chi tiết
+            </Button>
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              disabled={dangIn}
+              onClick={() => xuLyInMotEm(r)}
+            >
+              Xuất PDF
+            </Button>
+          </div>
         ) : null,
     },
   ];
@@ -183,16 +243,27 @@ export default function ResultRoomScorePage() {
         tieuDe={tieuDe}
         moTa={moTa}
         hanhDong={
-          laAdmin ? (
+          <div className="flex gap-2">
+            {/* Bài làm là hồ sơ chuyên môn -> GV cũng xuất được, không chỉ Admin. */}
             <Button
               variant="outline"
               type="button"
-              disabled={!phong || dangXuat || total === 0}
-              onClick={() => setMoHopXuat(true)}
+              disabled={!phong || dangIn || total === 0}
+              onClick={xuLyInCaPhong}
             >
-              Xuất Excel
+              {dangIn ? 'Đang chuẩn bị...' : 'Xuất PDF bài làm'}
             </Button>
-          ) : undefined
+            {laAdmin && (
+              <Button
+                variant="outline"
+                type="button"
+                disabled={!phong || dangXuat || total === 0}
+                onClick={() => setMoHopXuat(true)}
+              >
+                Xuất Excel
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -251,6 +322,9 @@ export default function ResultRoomScorePage() {
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
+
+      {/* Vùng in ẩn — chỉ hiện khi trình duyệt in (xem @media print ở index.css) */}
+      {dsIn && phong && <BaiLamInAn phong={phong} dsBaiLam={dsIn} />}
     </div>
   );
 }

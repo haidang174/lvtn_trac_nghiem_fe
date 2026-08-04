@@ -20,3 +20,31 @@
     @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:bg-gray-100;
   }
 }
+
+/* --- Vùng in bài làm (xuất PDF qua hộp thoại in của trình duyệt) ---
+   BaiLamInAn gắn portal thẳng vào <body> (ngoài #root) nên khi in chỉ cần ẩn
+   #root là toàn bộ giao diện app biến mất, không sinh trang trắng thừa. */
+#vung-in-bai-lam {
+  display: none;
+}
+
+@media print {
+  #root {
+    display: none !important;
+  }
+
+  #vung-in-bai-lam {
+    display: block !important;
+    /* Lề trái/phải tự lo (padding giữ nguyên trên mọi trang). Lề trên/dưới do
+       dải đệm thead/tfoot trong BaiLamInAn — trình duyệt lặp lại ở mỗi trang. */
+    padding-left: 15mm;
+    padding-right: 15mm;
+  }
+
+  /* margin = 0 để trình duyệt không còn chỗ in tiêu đề/URL/ngày/số trang
+     vào lề giấy. Đừng đặt lại margin khác 0 nếu không muốn chúng hiện lại. */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
