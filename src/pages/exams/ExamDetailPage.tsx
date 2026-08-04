@@ -126,6 +126,13 @@ export default function ExamDetailPage() {
                 <MathText>{c.cauHoi?.noiDung ?? `Câu #${c.maCauHoi}`}</MathText>
               </p>
             </div>
+            {c.cauHoi?.hinhAnh && (
+              <img
+                src={c.cauHoi.hinhAnh}
+                alt="Hình minh họa"
+                className="mb-2 ml-9 max-h-60 rounded-lg border border-gray-200 object-contain"
+              />
+            )}
             {c.cauHoi?.luaChons && (
               <ul className="ml-9 space-y-1 text-sm text-gray-600">
                 {c.cauHoi.luaChons.map((lc, j) => (
