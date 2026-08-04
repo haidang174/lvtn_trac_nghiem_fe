@@ -49,7 +49,7 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/exam-rooms',
     nhan: 'Phòng thi',
     icon: '🏫',
-    vaiTro: [VaiTro.QUAN_TRI_VIEN],
+    vaiTro: [VaiTro.GIAO_VIEN, VaiTro.QUAN_TRI_VIEN],
   },
   {
     path: '/enroll',

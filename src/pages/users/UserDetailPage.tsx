@@ -115,7 +115,7 @@ export default function UserDetailPage() {
             {NHAN_TRANG_THAI_BAI_LAM[r.trangThaiBaiLam] ?? r.trangThaiBaiLam}
           </StatusBadge>
         ) : (
-          <StatusBadge mau="gray">Không tham gia</StatusBadge>
+          <StatusBadge mau="gray">Vắng</StatusBadge>
         ),
     },
     {

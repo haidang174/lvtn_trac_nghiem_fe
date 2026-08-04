@@ -93,9 +93,10 @@ export const moduleRoutes: RouteObject[] = [
     ],
   },
 
-  // ----- Module Phòng thi: Admin quản lý CRUD -----
+  // ----- Module Phòng thi: GV + Admin (mỗi người chỉ quản lý phòng mình tạo;
+  // GV chỉ mở được phòng dùng mã tham gia) -----
   {
-    element: <RoleBasedRoute vaiTroChoPhep={[VaiTro.QUAN_TRI_VIEN]} />,
+    element: <RoleBasedRoute vaiTroChoPhep={GV_ADMIN} />,
     children: [
       { path: '/exam-rooms', element: <ExamRoomListPage /> },
       { path: '/exam-rooms/new', element: <ExamRoomFormPage /> },

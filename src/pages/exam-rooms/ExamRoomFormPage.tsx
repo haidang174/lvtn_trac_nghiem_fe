@@ -10,9 +10,12 @@ import { examsApi } from '@/api/exams.api';
 import { subjectOfferingsApi } from '@/api/subjectOfferings.api';
 import { enrollmentsApi } from '@/api/enrollments.api';
 import { chuanHoaLoi } from '@/api/axiosClient';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { VaiTro } from '@/enums/vaiTro';
 import { localToISO, nowLocalInput, formatDateTime } from '@/utils/formatDate';
 import { CheDoCauHoi, NHAN_CHE_DO_CAU_HOI } from '@/enums/cheDoCauHoi';
+import { HinhThucThamGia } from '@/enums/hinhThucThamGia';
 import { TrangThaiBaiThi } from '@/enums/trangThaiBaiThi';
 import type { BaiThi } from '@/types/bai-thi.type';
 import type { MonHocHocKy } from '@/types/mon-hoc-hoc-ky.type';
@@ -23,6 +26,9 @@ export default function ExamRoomFormPage() {
   const laSua = !!id;
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  // GV chỉ mở được phòng dùng mã tham gia, không gán học sinh.
+  const laGiaoVien = user?.vaiTro === VaiTro.GIAO_VIEN;
 
   const [offerings, setOfferings] = useState<MonHocHocKy[]>([]);
   const [deCongKhai, setDeCongKhai] = useState<BaiThi[]>([]);
@@ -33,6 +39,12 @@ export default function ExamRoomFormPage() {
   const [tenPhongThi, setTenPhongThi] = useState('');
   const [maBaiThis, setMaBaiThis] = useState<number[]>([]);
   const [maHocSinhs, setMaHocSinhs] = useState<number[]>([]);
+  const [hinhThuc, setHinhThuc] = useState<HinhThucThamGia>(
+    laGiaoVien ? HinhThucThamGia.MA_THAM_GIA : HinhThucThamGia.GAN_HOC_SINH,
+  );
+  // Hình thức lúc nạp (chế độ sửa) — dùng để cảnh báo khi Admin đổi qua lại.
+  const [hinhThucGoc, setHinhThucGoc] = useState<HinhThucThamGia | null>(null);
+  const [maThamGia, setMaThamGia] = useState<string | null>(null);
   const [cheDo, setCheDo] = useState<CheDoCauHoi>(CheDoCauHoi.THEO_THU_TU);
   const [thoiGianLamBai, setThoiGianLamBai] = useState(30);
   const [moLuc, setMoLuc] = useState('');
@@ -43,18 +55,28 @@ export default function ExamRoomFormPage() {
   const napDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
-      const dsOffering = await subjectOfferingsApi.getOfferings({
-        page: 1,
-        limit: 1000,
-        laHoatDong: true,
-      });
-      setOfferings(dsOffering.items);
+      // GV không gọi được GET /subject-offerings (Admin-only) — dùng danh sách
+      // môn mình được phân dạy; endpoint đó không lọc laHoatDong nên lọc ở đây.
+      if (laGiaoVien) {
+        const dsDay = await subjectOfferingsApi.getMyTeaching();
+        setOfferings(dsDay.filter((o) => o.laHoatDong));
+      } else {
+        const dsOffering = await subjectOfferingsApi.getOfferings({
+          page: 1,
+          limit: 1000,
+          laHoatDong: true,
+        });
+        setOfferings(dsOffering.items);
+      }
 
       if (laSua && id) {
         const phong = await examRoomsApi.getExamRoomById(+id);
         setMaMonHocHocKy(String(phong.maMonHocHocKy));
         setTenPhongThi(phong.tenPhongThi);
         setCheDo(phong.cheDoCauHoi);
+        setHinhThuc(phong.hinhThucThamGia);
+        setHinhThucGoc(phong.hinhThucThamGia);
+        setMaThamGia(phong.maThamGia);
         setThoiGianLamBai(phong.thoiGianLamBai);
         setMaBaiThis(
           (phong.phongThiBaiThis ?? []).map((p) => p.maBaiThi),
@@ -69,7 +91,7 @@ export default function ExamRoomFormPage() {
     } finally {
       setDangTai(false);
     }
-  }, [id, laSua, navigate, toast]);
+  }, [id, laSua, laGiaoVien, navigate, toast]);
 
   useEffect(() => {
     napDuLieu();
@@ -99,8 +121,9 @@ export default function ExamRoomFormPage() {
   }, [maMonHocHocKy, toast]);
 
   // Nạp danh sách HS đã ghi danh môn-học-kỳ + HS đã gán vào phòng khác (để ẩn).
+  // Chỉ Admin cần: 2 endpoint này đều Admin-only và GV không gán học sinh.
   useEffect(() => {
-    if (!maMonHocHocKy) {
+    if (!maMonHocHocKy || laGiaoVien) {
       setDsGhiDanh([]);
       setDaGanKhac([]);
       return;
@@ -123,7 +146,7 @@ export default function ExamRoomFormPage() {
     return () => {
       huy = true;
     };
-  }, [maMonHocHocKy, id, laSua, toast]);
+  }, [maMonHocHocKy, id, laSua, laGiaoVien, toast]);
 
   const dongLucTuTinh =
     moLuc && thoiGianLamBai
@@ -146,6 +169,9 @@ export default function ExamRoomFormPage() {
     );
   };
 
+  const laDungMa = hinhThuc === HinhThucThamGia.MA_THAM_GIA;
+  const doiHinhThuc = hinhThucGoc !== null && hinhThuc !== hinhThucGoc;
+
   // HS đã gán vào phòng khác thì ẩn khỏi danh sách chọn.
   const dsKhaDung = dsGhiDanh.filter((g) => !daGanKhac.includes(g.maHocSinh));
   const chonTatCaHs = () => setMaHocSinhs(dsKhaDung.map((g) => g.maHocSinh));
@@ -164,7 +190,7 @@ export default function ExamRoomFormPage() {
       return toast.error(
         `Thời lượng phòng (${thoiGianLamBai} phút) không được nhỏ hơn thời lượng đề dài nhất (${maxDe} phút)`,
       );
-    if (maHocSinhs.length === 0)
+    if (!laDungMa && maHocSinhs.length === 0)
       return toast.error('Vui lòng gán ít nhất 1 học sinh vào phòng');
     if (!moLuc) return toast.error('Vui lòng nhập thời gian mở phòng');
     if (new Date(moLuc) < new Date())
@@ -172,11 +198,14 @@ export default function ExamRoomFormPage() {
 
     setDangLuu(true);
     try {
+      // Chế độ mã tham gia: không gửi maHocSinhs — danh sách trong phòng là do
+      // HS tự nhập mã, Backend sẽ từ chối nếu nhận danh sách gán tay.
       const payload = {
         maMonHocHocKy: Number(maMonHocHocKy),
         tenPhongThi: tenPhongThi.trim(),
         maBaiThis,
-        maHocSinhs,
+        hinhThucThamGia: hinhThuc,
+        ...(laDungMa ? {} : { maHocSinhs }),
         cheDoCauHoi: cheDo,
         thoiGianLamBai,
         moLuc: localToISO(moLuc),
@@ -218,7 +247,7 @@ export default function ExamRoomFormPage() {
 
       <form
         onSubmit={xuLyLuu}
-        className="max-w-2xl space-y-5 rounded-xl border border-gray-200 bg-white p-5"
+        className="max-w space-y-5 rounded-xl border border-gray-200 bg-white p-5"
       >
         <Select
           label="Môn học (học kỳ) *"
@@ -279,6 +308,82 @@ export default function ExamRoomFormPage() {
           )}
         </div>
 
+        {laGiaoVien ? (
+          <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+            Phòng của giáo viên dùng <strong>mã tham gia</strong>: học sinh đã
+            đăng ký môn này tự nhập mã để vào phòng.
+          </p>
+        ) : (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Hình thức tham gia *
+          </label>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  giaTri: HinhThucThamGia.GAN_HOC_SINH,
+                  nhan: 'Gán học sinh',
+                  moTa: 'Chọn sẵn danh sách học sinh được vào phòng.',
+                },
+                {
+                  giaTri: HinhThucThamGia.MA_THAM_GIA,
+                  nhan: 'Mã tham gia',
+                  moTa: 'Hệ thống sinh mã, học sinh tự nhập mã để vào phòng.',
+                },
+              ] as const
+            ).map((o) => (
+              <label
+                key={o.giaTri}
+                className={`flex cursor-pointer gap-2 rounded-lg border p-3 ${
+                  hinhThuc === o.giaTri
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="hinhThucThamGia"
+                  className="mt-0.5"
+                  checked={hinhThuc === o.giaTri}
+                  onChange={() => setHinhThuc(o.giaTri)}
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-800">
+                    {o.nhan}
+                  </span>
+                  <span className="block text-xs text-gray-500">{o.moTa}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {doiHinhThuc && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              {laDungMa
+                ? 'Đổi sang mã tham gia sẽ xóa danh sách học sinh đã có trong phòng; các em sẽ vào lại bằng mã.'
+                : 'Đổi sang gán tay sẽ hủy mã tham gia hiện tại; hãy kiểm tra danh sách học sinh bên dưới.'}
+            </p>
+          )}
+        </div>
+        )}
+
+        {laDungMa ? (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Mã tham gia
+            </label>
+            {maThamGia ? (
+              <div className="input-base flex items-center bg-gray-50 font-mono text-lg tracking-widest text-gray-800">
+                {maThamGia}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                Mã tham gia sẽ được sinh sau khi lưu phòng thi.
+              </p>
+            )}
+          </div>
+        ) : (
         <div>
           <div className="mb-1 flex items-center justify-between">
             <label className="block text-sm font-medium text-gray-700">
@@ -335,6 +440,7 @@ export default function ExamRoomFormPage() {
             </ul>
           )}
         </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Select

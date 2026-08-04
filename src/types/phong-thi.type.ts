@@ -1,4 +1,5 @@
 import type { CheDoCauHoi } from '@/enums/cheDoCauHoi';
+import type { HinhThucThamGia } from '@/enums/hinhThucThamGia';
 import type { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 import type { TrangThaiThanhVien } from '@/enums/trangThaiThanhVien';
 import type { NguoiDung } from './nguoi-dung.type';
@@ -22,7 +23,8 @@ export interface PhongThiBaiThi {
   baiThi?: BaiThi;
 }
 
-// Khớp entity PHONG_THI_HOC_SINH (bảng nối phòng - học sinh được gán).
+// Khớp entity PHONG_THI_HOC_SINH (bảng nối phòng - học sinh trong phòng: do
+// Admin gán, hoặc do chính HS nhập mã tham gia).
 export interface PhongThiHocSinh {
   maPhongThiHocSinh: number;
   maPhongThi: number;
@@ -37,11 +39,15 @@ export interface PhongThi {
   taoBoi: number;
   tenPhongThi: string;
   cheDoCauHoi: CheDoCauHoi;
+  hinhThucThamGia: HinhThucThamGia;
+  // Chỉ Admin thấy mã; HS/GV luôn nhận null.
+  maThamGia: string | null;
   thoiGianLamBai: number;
   moLuc: string;
   dongLuc: string;
   trangThai: TrangThaiPhongThi;
   monHocHocKy?: MonHocHocKy;
+  nguoiTao?: NguoiDung;
   phongThiBaiThis?: PhongThiBaiThi[];
   phongThiHocSinhs?: PhongThiHocSinh[];
   thanhViens?: ThanhVienPhong[];

@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/useToast';
 import { formatDateTime } from '@/utils/formatDate';
 import { formatScore } from '@/utils/formatScore';
 import { xuatBangDiemPhongExcel } from '@/utils/bangDiemPhongThi';
+import { taiChiTietBaiLam, inVungBaiLam } from '@/utils/inBaiLam';
+import { slugTen } from '@/utils/slugTen';
+import BaiLamInAn, { type BaiLamIn } from '@/components/common/BaiLamInAn';
 import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
 import { VaiTro } from '@/enums/vaiTro';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
@@ -31,8 +34,6 @@ export default function ResultRoomScorePage() {
   const toast = useToast();
   // Người đang đăng nhập -> "Cán bộ xuất bảng điểm" ở chân biểu mẫu.
   const { user } = useAuth();
-  // Bảng điểm in ra là văn bản chính thức -> chỉ Admin được xuất (GV vẫn xem được bảng).
-  const laAdmin = user?.vaiTro === VaiTro.QUAN_TRI_VIEN;
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [items, setItems] = useState<BangDiemPhongItem[]>([]);
@@ -42,6 +43,9 @@ export default function ResultRoomScorePage() {
   const [dangXuat, setDangXuat] = useState(false);
   const [moHopXuat, setMoHopXuat] = useState(false);
   const [khoa, setKhoa] = useState(() => localStorage.getItem(KHOA_KEY) ?? '');
+  // Bài làm đang chờ in (chỉ tồn tại trong lúc mở hộp thoại in).
+  const [dsIn, setDsIn] = useState<BaiLamIn[] | null>(null);
+  const [dangIn, setDangIn] = useState(false);
 
   // Nạp thông tin phòng cho tiêu đề.
   useEffect(() => {
@@ -74,7 +78,8 @@ export default function ResultRoomScorePage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
-  // Phòng đã đóng → HS chưa có điểm là "Bỏ thi"; phòng chưa đóng vẫn "Chưa thi".
+  // Phòng đã đóng -> HS chưa có điểm hiện "Vắng"; phòng chưa đóng vẫn "Chưa thi"
+  // (chỉ dùng cho bảng trên màn hình — file Excel để trống cột Ghi chú).
   const phongDaDong = phong
     ? phong.trangThai === TrangThaiPhongThi.DA_DONG ||
       new Date() >= new Date(phong.dongLuc)
@@ -84,10 +89,12 @@ export default function ResultRoomScorePage() {
   // đang xem) rồi dựng file ngay tại trình duyệt.
   const xuLyXuatExcel = async () => {
     if (!phong) return;
+    // Khoa là bắt buộc: dòng "KHOA:" trên biểu mẫu không được để trống.
+    if (!khoa.trim()) return toast.error('Vui lòng nhập tên khoa');
     setDangXuat(true);
     try {
       const ds = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
-      await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, {
+      await xuatBangDiemPhongExcel(phong, ds.items, {
         khoa,
         tenCanBo: user?.tenNguoiDung,
       });
@@ -97,6 +104,49 @@ export default function ResultRoomScorePage() {
       toast.error(chuanHoaLoi(err).message);
     } finally {
       setDangXuat(false);
+    }
+  };
+
+  // Xuất bài làm ra PDF bằng hộp thoại in của trình duyệt: dựng vùng in ẩn
+  // (BaiLamInAn) rồi gọi window.print(), người dùng chọn "Lưu thành PDF".
+  const inBaiLam = async (ds: BaiLamIn[], tenFile: string) => {
+    if (ds.length === 0) {
+      toast.error('Chưa có bài làm nào để xuất');
+      return;
+    }
+    setDsIn(ds);
+    try {
+      await inVungBaiLam(tenFile);
+    } finally {
+      setDsIn(null);
+    }
+  };
+
+  // Một học sinh: chỉ cần chi tiết của đúng em đó.
+  const xuLyInMotEm = async (row: BangDiemPhongItem) => {
+    setDangIn(true);
+    try {
+      const ds = await taiChiTietBaiLam([row]);
+      await inBaiLam(ds, `Bai-lam-${slugTen(row.tenNguoiDung ?? String(row.maNguoiDung))}`);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangIn(false);
+    }
+  };
+
+  // Cả phòng: tải lại TOÀN BỘ danh sách (không chỉ trang đang xem) như nút Excel.
+  const xuLyInCaPhong = async () => {
+    if (!phong) return;
+    setDangIn(true);
+    try {
+      const bangDiem = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
+      const ds = await taiChiTietBaiLam(bangDiem.items);
+      await inBaiLam(ds, `Bai-lam-phong-${slugTen(phong.tenPhongThi)}`);
+    } catch (err) {
+      toast.error(chuanHoaLoi(err).message);
+    } finally {
+      setDangIn(false);
     }
   };
 
@@ -122,7 +172,7 @@ export default function ResultRoomScorePage() {
           <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
         ) : phongDaDong ? (
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-            Bỏ thi
+            Vắng
           </span>
         ) : (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
@@ -144,14 +194,25 @@ export default function ResultRoomScorePage() {
       className: 'text-right',
       render: (r) =>
         r.daThi && r.maKetQua != null ? (
-          <Button
-            variant="ghost"
-            type="button"
-            className="!px-2 !py-1"
-            onClick={() => navigate(`/results/${r.maKetQua}`)}
-          >
-            Chi tiết
-          </Button>
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              onClick={() => navigate(`/results/${r.maKetQua}`)}
+            >
+              Chi tiết
+            </Button>
+            <Button
+              variant="ghost"
+              type="button"
+              className="!px-2 !py-1"
+              disabled={dangIn}
+              onClick={() => xuLyInMotEm(r)}
+            >
+              Xuất PDF
+            </Button>
+          </div>
         ) : null,
     },
   ];
@@ -180,7 +241,16 @@ export default function ResultRoomScorePage() {
         tieuDe={tieuDe}
         moTa={moTa}
         hanhDong={
-          laAdmin ? (
+          <div className="flex gap-2">
+            {/* Bài làm là hồ sơ chuyên môn -> GV cũng xuất được, không chỉ Admin. */}
+            <Button
+              variant="outline"
+              type="button"
+              disabled={!phong || dangIn || total === 0}
+              onClick={xuLyInCaPhong}
+            >
+              {dangIn ? 'Đang chuẩn bị...' : 'Xuất PDF bài làm'}
+            </Button>
             <Button
               variant="outline"
               type="button"
@@ -189,41 +259,45 @@ export default function ResultRoomScorePage() {
             >
               Xuất Excel
             </Button>
-          ) : undefined
+          </div>
         }
       />
 
       {/* Hỏi tên khoa trước khi xuất (mẫu của trường có dòng "KHOA:"). */}
-      {laAdmin && (
-        <Modal
-          moRa={moHopXuat}
-          onDong={() => setMoHopXuat(false)}
-          tieuDe="Xuất bảng điểm ra Excel"
-          kichThuoc="sm"
-          chanDuoi={
-            <>
-              <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
-                Hủy
-              </Button>
-              <Button type="button" disabled={dangXuat} onClick={xuLyXuatExcel}>
-                {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
-              </Button>
-            </>
-          }
-        >
-          <Input
-            name="khoa"
-            label="Khoa"
-            value={khoa}
-            placeholder="VD: Công nghệ Thông tin"
-            autoFocus
-            onChange={(e) => setKhoa(e.target.value)}
-          />
-          <p className="mt-2 text-xs text-gray-500">
-            Điền vào dòng "KHOA:" trên biểu mẫu. Để trống nếu muốn ghi tay sau khi in.
-          </p>
-        </Modal>
-      )}
+      <Modal
+        moRa={moHopXuat}
+        onDong={() => setMoHopXuat(false)}
+        tieuDe="Xuất bảng điểm ra Excel"
+        kichThuoc="sm"
+        chanDuoi={
+          <>
+            <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              disabled={dangXuat || !khoa.trim()}
+              onClick={xuLyXuatExcel}
+            >
+              {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
+            </Button>
+          </>
+        }
+      >
+        <Input
+          name="khoa"
+          label="Khoa *"
+          required
+          maxLength={100}
+          value={khoa}
+          placeholder="VD: Công nghệ Thông tin"
+          autoFocus
+          onChange={(e) => setKhoa(e.target.value)}
+        />
+        <p className="mt-2 text-xs text-gray-500">
+          Điền vào dòng "KHOA:" trên biểu mẫu.
+        </p>
+      </Modal>
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -242,6 +316,9 @@ export default function ResultRoomScorePage() {
       />
 
       <Pagination page={page} limit={limit} total={total} onChangePage={setPage} />
+
+      {/* Vùng in ẩn — chỉ hiện khi trình duyệt in (xem @media print ở index.css) */}
+      {dsIn && phong && <BaiLamInAn phong={phong} dsBaiLam={dsIn} />}
     </div>
   );
 }

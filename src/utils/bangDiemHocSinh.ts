@@ -51,7 +51,7 @@ interface ThongTinHocSinh {
 }
 
 // Xuất bảng điểm cá nhân của 1 học sinh ra file Excel (.xlsx), gom theo môn,
-// kèm điểm TB mỗi môn và cả các dòng "Không tham gia" (giống màn hình).
+// kèm điểm TB mỗi môn và cả các dòng "Vắng" (giống màn hình).
 export function xuatBangDiemExcel(user: ThongTinHocSinh, nhomMon: NhomMon[]): void {
   const rows: (string | number)[][] = [];
 
@@ -78,7 +78,7 @@ export function xuatBangDiemExcel(user: ThongTinHocSinh, nhomMon: NhomMon[]): vo
             'Đã nộp',
         ]);
       } else {
-        rows.push([r.tenPhongThi, '', '', '', '', 'Không tham gia']);
+        rows.push([r.tenPhongThi, '', '', '', '', 'Vắng']);
       }
     }
     rows.push([]);

@@ -15,7 +15,7 @@ function tachHoTen(hoTen: string): { hoDem: string; ten: string } {
 
 // MSSV không được lưu riêng trong DB — email trường có dạng <mssv>@... nên lấy
 // phần trước dấu @ làm MSSV.
-function mssvTuEmail(email?: string | null): string {
+export function mssvTuEmail(email?: string | null): string {
   if (!email) return '';
   return email.split('@')[0] ?? '';
 }
@@ -32,12 +32,12 @@ const VIEN_MONG: Partial<ExcelJS.Borders> = {
 // tiêu đề trường/quốc hiệu, "BẢNG ĐIỂM THI MÔN", tên môn + tên phòng, rồi bảng
 // TT | MSSV | Email | Họ đệm | Tên | Điểm | Ghi chú (có khung viền, in được ngay).
 // Danh sách gồm MỌI học sinh được gán vào phòng, em chưa thi để trống ô điểm.
-// `khoa` do người dùng nhập lúc xuất, `tenCanBo` là người đang đăng nhập —
-// để trống thì phần tương ứng chỉ in nhãn cho ghi tay.
+// Cột Ghi chú luôn để trống (chỉ kẻ khung) — chỗ cán bộ ghi tay.
+// `khoa` do người dùng nhập lúc xuất (màn hình bắt buộc nhập), `tenCanBo` là
+// người đang đăng nhập — để trống thì phần tương ứng chỉ in nhãn cho ghi tay.
 export async function xuatBangDiemPhongExcel(
   phong: PhongThi,
   items: BangDiemPhongItem[],
-  phongDaDong: boolean,
   tuyChon: { khoa?: string; tenCanBo?: string } = {},
 ): Promise<void> {
   const khoa = tuyChon.khoa ?? '';
@@ -125,9 +125,8 @@ export async function xuatBangDiemPhongExcel(
   // --- Dữ liệu ---
   danhSach.forEach((r, i) => {
     const row = ws.getRow(DONG_HEADER + 1 + i);
-    // Ghi chú chỉ dùng cho trường hợp vắng: chưa thi thì ô điểm để trống và ghi
-    // rõ bỏ thi / chưa thi. Em đã thi để trống ghi chú (điểm đã ở cột Điểm).
-    const ghiChu = r.daThi ? '' : phongDaDong ? 'Bỏ thi' : 'Chưa thi';
+    // Em chưa thi thì để trống ô điểm. Cột Ghi chú để trống hoàn toàn — theo
+    // biểu mẫu của trường, đây là chỗ cán bộ ghi tay sau khi in.
     row.values = [
       i + 1,
       mssvTuEmail(r.email),
@@ -135,7 +134,7 @@ export async function xuatBangDiemPhongExcel(
       r.hoDem,
       r.ten,
       r.daThi ? Math.round(Number(r.diemSo) * 100) / 100 : '',
-      ghiChu,
+      '',
     ];
     for (let c = 1; c <= 7; c++) {
       const cell = row.getCell(c);
