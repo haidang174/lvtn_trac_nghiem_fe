@@ -74,7 +74,8 @@ export default function ResultRoomScorePage() {
     taiDuLieu();
   }, [taiDuLieu]);
 
-  // Phòng đã đóng → HS chưa có điểm là "Bỏ thi"; phòng chưa đóng vẫn "Chưa thi".
+  // Phòng đã đóng -> HS chưa có điểm hiện "Vắng"; phòng chưa đóng vẫn "Chưa thi"
+  // (chỉ dùng cho bảng trên màn hình — file Excel để trống cột Ghi chú).
   const phongDaDong = phong
     ? phong.trangThai === TrangThaiPhongThi.DA_DONG ||
       new Date() >= new Date(phong.dongLuc)
@@ -84,10 +85,12 @@ export default function ResultRoomScorePage() {
   // đang xem) rồi dựng file ngay tại trình duyệt.
   const xuLyXuatExcel = async () => {
     if (!phong) return;
+    // Khoa là bắt buộc: dòng "KHOA:" trên biểu mẫu không được để trống.
+    if (!khoa.trim()) return toast.error('Vui lòng nhập tên khoa');
     setDangXuat(true);
     try {
       const ds = await resultsApi.getRoomScores(maPhong, { page: 1, limit: 1000 });
-      await xuatBangDiemPhongExcel(phong, ds.items, phongDaDong, {
+      await xuatBangDiemPhongExcel(phong, ds.items, {
         khoa,
         tenCanBo: user?.tenNguoiDung,
       });
@@ -122,7 +125,7 @@ export default function ResultRoomScorePage() {
           <span className="font-bold text-primary">{formatScore(r.diemSo)}/10</span>
         ) : phongDaDong ? (
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-            Bỏ thi
+            Vắng
           </span>
         ) : (
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
@@ -205,7 +208,11 @@ export default function ResultRoomScorePage() {
               <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
                 Hủy
               </Button>
-              <Button type="button" disabled={dangXuat} onClick={xuLyXuatExcel}>
+              <Button
+                type="button"
+                disabled={dangXuat || !khoa.trim()}
+                onClick={xuLyXuatExcel}
+              >
                 {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
               </Button>
             </>
@@ -213,14 +220,16 @@ export default function ResultRoomScorePage() {
         >
           <Input
             name="khoa"
-            label="Khoa"
+            label="Khoa *"
+            required
+            maxLength={100}
             value={khoa}
             placeholder="VD: Công nghệ Thông tin"
             autoFocus
             onChange={(e) => setKhoa(e.target.value)}
           />
           <p className="mt-2 text-xs text-gray-500">
-            Điền vào dòng "KHOA:" trên biểu mẫu. Để trống nếu muốn ghi tay sau khi in.
+            Điền vào dòng "KHOA:" trên biểu mẫu.
           </p>
         </Modal>
       )}
