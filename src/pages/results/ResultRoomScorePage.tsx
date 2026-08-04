@@ -34,8 +34,6 @@ export default function ResultRoomScorePage() {
   const toast = useToast();
   // Người đang đăng nhập -> "Cán bộ xuất bảng điểm" ở chân biểu mẫu.
   const { user } = useAuth();
-  // Bảng điểm in ra là văn bản chính thức -> chỉ Admin được xuất (GV vẫn xem được bảng).
-  const laAdmin = user?.vaiTro === VaiTro.QUAN_TRI_VIEN;
 
   const [phong, setPhong] = useState<PhongThi | null>(null);
   const [items, setItems] = useState<BangDiemPhongItem[]>([]);
@@ -253,57 +251,53 @@ export default function ResultRoomScorePage() {
             >
               {dangIn ? 'Đang chuẩn bị...' : 'Xuất PDF bài làm'}
             </Button>
-            {laAdmin && (
-              <Button
-                variant="outline"
-                type="button"
-                disabled={!phong || dangXuat || total === 0}
-                onClick={() => setMoHopXuat(true)}
-              >
-                Xuất Excel
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              type="button"
+              disabled={!phong || dangXuat || total === 0}
+              onClick={() => setMoHopXuat(true)}
+            >
+              Xuất Excel
+            </Button>
           </div>
         }
       />
 
       {/* Hỏi tên khoa trước khi xuất (mẫu của trường có dòng "KHOA:"). */}
-      {laAdmin && (
-        <Modal
-          moRa={moHopXuat}
-          onDong={() => setMoHopXuat(false)}
-          tieuDe="Xuất bảng điểm ra Excel"
-          kichThuoc="sm"
-          chanDuoi={
-            <>
-              <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
-                Hủy
-              </Button>
-              <Button
-                type="button"
-                disabled={dangXuat || !khoa.trim()}
-                onClick={xuLyXuatExcel}
-              >
-                {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
-              </Button>
-            </>
-          }
-        >
-          <Input
-            name="khoa"
-            label="Khoa *"
-            required
-            maxLength={100}
-            value={khoa}
-            placeholder="VD: Công nghệ Thông tin"
-            autoFocus
-            onChange={(e) => setKhoa(e.target.value)}
-          />
-          <p className="mt-2 text-xs text-gray-500">
-            Điền vào dòng "KHOA:" trên biểu mẫu.
-          </p>
-        </Modal>
-      )}
+      <Modal
+        moRa={moHopXuat}
+        onDong={() => setMoHopXuat(false)}
+        tieuDe="Xuất bảng điểm ra Excel"
+        kichThuoc="sm"
+        chanDuoi={
+          <>
+            <Button variant="outline" type="button" onClick={() => setMoHopXuat(false)}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              disabled={dangXuat || !khoa.trim()}
+              onClick={xuLyXuatExcel}
+            >
+              {dangXuat ? 'Đang xuất...' : 'Xuất Excel'}
+            </Button>
+          </>
+        }
+      >
+        <Input
+          name="khoa"
+          label="Khoa *"
+          required
+          maxLength={100}
+          value={khoa}
+          placeholder="VD: Công nghệ Thông tin"
+          autoFocus
+          onChange={(e) => setKhoa(e.target.value)}
+        />
+        <p className="mt-2 text-xs text-gray-500">
+          Điền vào dòng "KHOA:" trên biểu mẫu.
+        </p>
+      </Modal>
 
       {/* Thẻ thống kê */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
