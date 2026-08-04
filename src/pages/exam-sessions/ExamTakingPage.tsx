@@ -24,6 +24,23 @@ function dinhDangGio(giay: number | null): string {
   return gio > 0 ? `${hai(gio)}:${hai(phut)}:${hai(giayLe)}` : `${hai(phut)}:${hai(giayLe)}`;
 }
 
+// Bài thi chỉ cho tiến tới
+const khoaViTri = (maBaiLam: number) => `thiCu.viTri.${maBaiLam}`;
+
+function docViTriDaLuu(maBaiLam: number, soCau: number): number {
+  const luu = Number(localStorage.getItem(khoaViTri(maBaiLam)));
+  if (!Number.isFinite(luu) || luu <= 0) return 0;
+  return Math.min(luu, Math.max(0, soCau - 1));
+}
+
+function luuViTri(maBaiLam: number, viTri: number) {
+  localStorage.setItem(khoaViTri(maBaiLam), String(viTri));
+}
+
+function xoaViTri(maBaiLam: number) {
+  localStorage.removeItem(khoaViTri(maBaiLam));
+}
+
 export default function ExamTakingPage() {
   const { id } = useParams<{ id: string }>();
   const maBaiLam = Number(id);
@@ -55,6 +72,7 @@ export default function ExamTakingPage() {
         const map: Record<number, number[]> = {};
         data.cauHois.forEach((c) => (map[c.maCauHoi] = c.daChon ?? []));
         setDapAn(map);
+        setViTri(docViTriDaLuu(maBaiLam, data.cauHois.length));
         if (data.trangThai !== TrangThaiBaiLam.DANG_LAM) setDaKetThuc(true);
       } catch (err) {
         toast.error(chuanHoaLoi(err).message);
@@ -68,10 +86,14 @@ export default function ExamTakingPage() {
     };
   }, [maBaiLam, navigate, toast]);
 
-  const xuLyHetGio = useCallback((kq: KetQuaTomTat | null) => {
-    setKetQua(kq);
-    setDaKetThuc(true);
-  }, []);
+  const xuLyHetGio = useCallback(
+    (kq: KetQuaTomTat | null) => {
+      setKetQua(kq);
+      setDaKetThuc(true);
+      xoaViTri(maBaiLam);
+    },
+    [maBaiLam],
+  );
 
   const { conLaiGiay } = useExamTimer({
     maBaiLam,
@@ -104,6 +126,15 @@ export default function ExamTakingPage() {
     luuTraLoi(maCauHoi, moi);
   };
 
+  // Chỉ được tiến tới: đây là nơi duy nhất đổi vị trí câu hỏi (ngoài lúc khôi phục).
+  const sangCauSau = () => {
+    setViTri((v) => {
+      const moi = v + 1;
+      luuViTri(maBaiLam, moi);
+      return moi;
+    });
+  };
+
   const nopBaiThi = useCallback(async () => {
     setDangNop(true);
     try {
@@ -112,6 +143,7 @@ export default function ExamTakingPage() {
       setDaKetThuc(true);
       setXacNhanNop(false);
       setCanhBaoViPham(null);
+      xoaViTri(maBaiLam);
     } catch (err) {
       toast.error(chuanHoaLoi(err).message);
     } finally {
@@ -197,6 +229,11 @@ export default function ExamTakingPage() {
       {/* Cột nội dung câu hỏi */}
       <div className="order-2 lg:order-1">
         <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            Bài thi chỉ cho phép tiến tới. Sau khi sang câu tiếp theo, bạn{' '}
+            <span className="font-semibold">không thể quay lại</span> câu trước.
+          </div>
+
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium text-gray-500">
               Câu {viTri + 1}/{phien.cauHois.length}
@@ -249,17 +286,9 @@ export default function ExamTakingPage() {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={viTri === 0}
-            onClick={() => setViTri((v) => v - 1)}
-          >
-            ← Câu trước
-          </Button>
+        <div className="mt-4 flex items-center justify-end">
           {viTri < phien.cauHois.length - 1 ? (
-            <Button type="button" onClick={() => setViTri((v) => v + 1)}>
+            <Button type="button" onClick={sangCauSau}>
               Câu sau →
             </Button>
           ) : (
@@ -291,27 +320,39 @@ export default function ExamTakingPage() {
           <p className="mb-2 text-sm font-medium text-gray-700">
             Đã làm {soCauDaLam}/{phien.cauHois.length}
           </p>
+          {/* Chỉ hiển thị trạng thái — không bấm để nhảy câu (chỉ tiến tới). */}
           <div className="grid grid-cols-5 gap-2">
             {phien.cauHois.map((c, i) => {
               const daLam = (dapAn[c.maCauHoi] ?? []).length > 0;
-              const dangXem = i === viTri;
+              let mau: string;
+              if (i === viTri) mau = 'border-primary bg-primary text-white';
+              else if (i > viTri) mau = 'border-gray-100 bg-gray-50 text-gray-300';
+              else if (daLam) mau = 'border-green-300 bg-green-50 text-green-700';
+              else mau = 'border-red-200 bg-red-50 text-red-600';
               return (
-                <button
+                <div
                   key={c.maCauHoi}
-                  type="button"
-                  onClick={() => setViTri(i)}
-                  className={`flex h-9 items-center justify-center rounded-lg border text-sm font-medium transition ${
-                    dangXem
-                      ? 'border-primary bg-primary text-white'
-                      : daLam
-                        ? 'border-green-300 bg-green-50 text-green-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`flex h-9 items-center justify-center rounded-lg border text-sm font-medium ${mau}`}
                 >
                   {i + 1}
-                </button>
+                </div>
               );
             })}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-sm border border-green-300 bg-green-50" />
+              Đã làm
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-sm border border-red-200 bg-red-50" />
+              Bỏ trống
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-sm border border-gray-100 bg-gray-50" />
+              Chưa tới
+            </span>
           </div>
         </div>
 
