@@ -223,7 +223,7 @@ export default function QuestionImportPage() {
           }
         />
 
-        <div className="max-w-2xl space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+        <div className="max-w space-y-5 rounded-xl border border-gray-200 bg-white p-6">
           <Select
             label="Môn học * (áp dụng cho tất cả câu hỏi import)"
             placeholder="-- Chọn môn --"
@@ -253,7 +253,7 @@ export default function QuestionImportPage() {
           {dangPhanTich ? (
             <div className="flex items-center gap-3 text-sm text-gray-500">
               <Spinner />
-              <span>Đang phân tích file bằng AI, vui lòng đợi…</span>
+              <span>Đang phân tích file, vui lòng đợi…</span>
             </div>
           ) : (
             <div className="flex justify-end">

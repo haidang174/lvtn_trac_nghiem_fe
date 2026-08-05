@@ -91,7 +91,7 @@ export default function QuestionDetailPage() {
         }
       />
 
-      <div className="max-w-3xl space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+      <div className="max-w space-y-5 rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-wrap gap-2">
           <StatusBadge mau="blue">{tenMon}</StatusBadge>
           <StatusBadge mau={mauDoKho[ch.doKho]}>{NHAN_DO_KHO[ch.doKho]}</StatusBadge>

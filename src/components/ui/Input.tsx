@@ -11,7 +11,7 @@ const Input = forwardRef<HTMLInputElement, Props>(function Input(
 ) {
   const inputId = id ?? rest.name;
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 w-full">
       {label && (
         <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
           {label}

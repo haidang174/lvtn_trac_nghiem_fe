@@ -19,7 +19,6 @@ import { taiChiTietBaiLam, inVungBaiLam } from '@/utils/inBaiLam';
 import { slugTen } from '@/utils/slugTen';
 import BaiLamInAn, { type BaiLamIn } from '@/components/common/BaiLamInAn';
 import { TrangThaiPhongThi } from '@/enums/trangThaiPhongThi';
-import { VaiTro } from '@/enums/vaiTro';
 import type { BangDiemPhongItem, ThongKeKetQua } from '@/types/ket-qua.type';
 import type { PhongThi } from '@/types/phong-thi.type';
 

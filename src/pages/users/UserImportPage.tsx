@@ -140,7 +140,7 @@ export default function UserImportPage() {
           }
         />
 
-        <div className="max-w-2xl space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+        <div className="max-w space-y-5 rounded-xl border border-gray-200 bg-white p-6">
           <Select
             label="Vai trò * (áp dụng cho tất cả tài khoản trong file)"
             placeholder="-- Chọn vai trò --"
