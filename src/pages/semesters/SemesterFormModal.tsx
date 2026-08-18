@@ -34,6 +34,12 @@ export default function SemesterFormModal({ moRa, hocKy, onDong, onLuuXong }: Pr
 
   const homNay = new Date().toISOString().slice(0, 10);
 
+  // Xóa trắng ngày bắt đầu thì ngày kết thúc cũng phải trống, vì ô đó sẽ bị khóa lại.
+  const doiNgayBatDau = (giaTri: string) => {
+    setNgayBatDau(giaTri);
+    if (!giaTri) setNgayKetThuc('');
+  };
+
   const xuLyLuu = async (e: FormEvent) => {
     e.preventDefault();
     if (!tenHocKy.trim() || !namHoc.trim())
@@ -110,12 +116,13 @@ export default function SemesterFormModal({ moRa, hocKy, onDong, onLuuXong }: Pr
             required
             min={laSua ? undefined : homNay}
             value={ngayBatDau}
-            onChange={(e) => setNgayBatDau(e.target.value)}
+            onChange={(e) => doiNgayBatDau(e.target.value)}
           />
           <Input
             label="Ngày kết thúc *"
             type="date"
             required
+            disabled={!ngayBatDau}
             min={ngayBatDau || undefined}
             value={ngayKetThuc}
             onChange={(e) => setNgayKetThuc(e.target.value)}
