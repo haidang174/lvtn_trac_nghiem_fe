@@ -18,6 +18,7 @@ export interface CreateUserPayload {
 
 export interface UpdateUserPayload {
   tenNguoiDung?: string;
+  email?: string;
   vaiTro?: VaiTro;
   laHoatDong?: boolean;
 }

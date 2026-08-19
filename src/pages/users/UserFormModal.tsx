@@ -43,6 +43,7 @@ export default function UserFormModal({ moRa, nguoiDung, onDong, onLuuXong }: Pr
       if (laSua) {
         await usersApi.updateUser(nguoiDung!.maNguoiDung, {
           tenNguoiDung: tenNguoiDung.trim(),
+          email: email.trim(),
           vaiTro,
         });
         toast.success('Cập nhật người dùng thành công');
@@ -92,7 +93,7 @@ export default function UserFormModal({ moRa, nguoiDung, onDong, onLuuXong }: Pr
           label="Email *"
           type="email"
           required
-          disabled={laSua}
+          // disabled={laSua}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="email@demo.com"
