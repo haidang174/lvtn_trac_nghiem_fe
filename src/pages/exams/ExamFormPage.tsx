@@ -79,6 +79,7 @@ export default function ExamFormPage() {
   const napDuLieu = useCallback(async () => {
     setDangTai(true);
     try {
+      // Endpoint này đã lọc sẵn môn đã gỡ và học kỳ đã kết thúc.
       const ds = await subjectOfferingsApi.getMyTeaching();
       setOfferings(ds);
 
@@ -86,6 +87,13 @@ export default function ExamFormPage() {
         const bt = await examsApi.getExamById(+id);
         setTieuDe(bt.tieuDe);
         setMaMonHocHocKy(String(bt.maMonHocHocKy));
+        // Đề cũ có thể thuộc học kỳ đã kết thúc (đã bị lọc khỏi danh sách
+        // trên) — bổ sung để ô chọn môn và ngân hàng câu hỏi vẫn đúng.
+        if (
+          bt.monHocHocKy &&
+          !ds.some((o) => o.maMonHocHocKy === bt.maMonHocHocKy)
+        )
+          setOfferings([bt.monHocHocKy, ...ds]);
         setThoiGian(bt.thoiGianLamBai);
         setTrangThai(bt.trangThai);
         setDaKhoa(!!bt.daSuDung);

@@ -56,22 +56,32 @@ export default function ExamRoomFormPage() {
     setDangTai(true);
     try {
       // GV không gọi được GET /subject-offerings (Admin-only) — dùng danh sách
-      // môn mình được phân dạy; endpoint đó không lọc laHoatDong nên lọc ở đây.
+      // môn mình được phân dạy; endpoint đó đã tự lọc môn đã gỡ và học kỳ đã
+      // kết thúc, còn phía Admin phải xin lọc bằng tham số.
+      let ds: MonHocHocKy[];
       if (laGiaoVien) {
-        const dsDay = await subjectOfferingsApi.getMyTeaching();
-        setOfferings(dsDay.filter((o) => o.laHoatDong));
+        ds = await subjectOfferingsApi.getMyTeaching();
       } else {
         const dsOffering = await subjectOfferingsApi.getOfferings({
           page: 1,
           limit: 1000,
           laHoatDong: true,
+          chuaKetThuc: true,
         });
-        setOfferings(dsOffering.items);
+        ds = dsOffering.items;
       }
+      setOfferings(ds);
 
       if (laSua && id) {
         const phong = await examRoomsApi.getExamRoomById(+id);
         setMaMonHocHocKy(String(phong.maMonHocHocKy));
+        // Phòng cũ có thể thuộc học kỳ đã kết thúc (đã bị lọc khỏi danh sách
+        // trên) — bổ sung để ô chọn môn vẫn hiển thị đúng tên.
+        if (
+          phong.monHocHocKy &&
+          !ds.some((o) => o.maMonHocHocKy === phong.maMonHocHocKy)
+        )
+          setOfferings([phong.monHocHocKy, ...ds]);
         setTenPhongThi(phong.tenPhongThi);
         setCheDo(phong.cheDoCauHoi);
         setHinhThuc(phong.hinhThucThamGia);

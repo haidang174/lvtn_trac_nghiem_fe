@@ -12,6 +12,8 @@ export interface QuerySubjectOfferingParams extends PaginationParams {
   maMonHoc?: number;
   search?: string;
   laHoatDong?: boolean;
+  // Chỉ lấy môn của học kỳ chưa kết thúc (dùng cho form tạo đề thi/phòng thi).
+  chuaKetThuc?: boolean;
 }
 
 // Lưu ý: axiosClient đã unwrap → trả thẳng `data`.
